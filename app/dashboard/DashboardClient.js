@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/Icons';
-import { GROUPS } from '@/lib/groups';
+import { ELECTRICAL_GROUPS, GROUPS, MECHANICAL_GROUPS } from '@/lib/groups';
 import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
 
 const PAGE_SIZE = 8;
@@ -12,6 +12,8 @@ const TYPE_FILTERS = [
   { value: 'dem', label: 'Suất đêm' },
   { value: 'all', label: 'Tất cả' },
 ];
+
+const EMPTY_ADMIN_FORM = { soDanhBo: '', hoTen: '', ngayDangKy: '', loaiSuat: 'xe', group: MECHANICAL_GROUPS[0], cnv: 0, contractor: 0 };
 
 function formatDateTime(value) {
   if (!value) return '—';
@@ -38,6 +40,73 @@ function HistoryChange({ row }) {
   return <>{changes.length ? changes.join(' · ') : row.hanh_dong}</>;
 }
 
+function AdminRegistrationModal({ mode, form, saving, error, onChange, onClose, onSubmit }) {
+  const readOnly = mode === 'edit';
+  const update = (patch) => onChange({ ...form, ...patch });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{readOnly ? 'Sửa đăng ký (quyền admin)' : 'Thêm đăng ký (quyền admin)'}</h2>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Đóng">×</button>
+        </div>
+        <form onSubmit={onSubmit} className="modal-form">
+          <label className="field-label" htmlFor="admin-so-danh-bo">Số danh bộ</label>
+          <input
+            id="admin-so-danh-bo"
+            inputMode="numeric"
+            value={form.soDanhBo}
+            disabled={readOnly}
+            placeholder="Nhập số danh bộ"
+            onChange={(event) => update({ soDanhBo: event.target.value.replace(/\D/g, '').slice(0, 20) })}
+          />
+          {readOnly && form.hoTen && <p className="helper-text">{form.hoTen}</p>}
+
+          <label className="field-label" htmlFor="admin-ngay-an">Ngày ăn</label>
+          <input
+            id="admin-ngay-an"
+            type="date"
+            value={form.ngayDangKy}
+            disabled={readOnly}
+            onChange={(event) => update({ ngayDangKy: event.target.value })}
+          />
+
+          <label className="field-label" htmlFor="admin-loai-suat">Loại suất</label>
+          <select id="admin-loai-suat" value={form.loaiSuat} disabled={readOnly} onChange={(event) => update({ loaiSuat: event.target.value })}>
+            {Object.keys(MEAL_TYPE_LABELS).map((type) => <option key={type} value={type}>{MEAL_TYPE_LABELS[type]}</option>)}
+          </select>
+
+          <label className="field-label" htmlFor="admin-nhom">Nhóm phụ trách</label>
+          <select id="admin-nhom" value={form.group} disabled={readOnly} onChange={(event) => update({ group: event.target.value })}>
+            <optgroup label="Bảo trì cơ khí">{MECHANICAL_GROUPS.map((name) => <option key={name}>{name}</option>)}</optgroup>
+            <optgroup label="Bảo trì điện">{ELECTRICAL_GROUPS.map((name) => <option key={name}>{name}</option>)}</optgroup>
+          </select>
+
+          <div className="modal-quantity-grid">
+            <label className="field-label" htmlFor="admin-cnv">
+              Xưởng Sửa chữa
+              <input id="admin-cnv" type="number" min="0" inputMode="numeric" value={form.cnv}
+                onChange={(event) => update({ cnv: Math.max(0, Math.trunc(Number(event.target.value)) || 0) })} />
+            </label>
+            <label className="field-label" htmlFor="admin-nha-thau">
+              Nhà thầu
+              <input id="admin-nha-thau" type="number" min="0" inputMode="numeric" value={form.contractor}
+                onChange={(event) => update({ contractor: Math.max(0, Math.trunc(Number(event.target.value)) || 0) })} />
+            </label>
+          </div>
+
+          {error && <p className="modal-error">{error}</p>}
+
+          <div className="modal-actions">
+            <button type="button" className="secondary-button" onClick={onClose}>Hủy</button>
+            <button type="submit" className="primary-button" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardClient({ today }) {
   const router = useRouter();
   const [from, setFrom] = useState(today);
@@ -52,6 +121,10 @@ export default function DashboardClient({ today }) {
   const [page, setPage] = useState(1);
   const [updatedAt, setUpdatedAt] = useState(new Date());
   const [todayItems, setTodayItems] = useState([]);
+  const [adminMode, setAdminMode] = useState('add');
+  const [adminForm, setAdminForm] = useState(null);
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [adminError, setAdminError] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 350);
@@ -159,6 +232,64 @@ export default function DashboardClient({ today }) {
     loadTodayReport();
   }
 
+  function openAddModal() {
+    setAdminMode('add');
+    setAdminError('');
+    setAdminForm({ ...EMPTY_ADMIN_FORM, ngayDangKy: today });
+  }
+
+  function openEditModal(item) {
+    setAdminMode('edit');
+    setAdminError('');
+    setAdminForm({
+      soDanhBo: item.so_danh_bo,
+      hoTen: item.ho_ten,
+      ngayDangKy: String(item.ngay_dang_ky).slice(0, 10),
+      loaiSuat: item.loai_suat,
+      group: item.nhom_phu_trach,
+      cnv: Number(item.sl_cnv || 0),
+      contractor: Number(item.sl_nha_thau || 0),
+    });
+  }
+
+  function closeAdminModal() {
+    setAdminForm(null);
+  }
+
+  async function submitAdminForm(event) {
+    event.preventDefault();
+    if (!adminForm) return;
+    setAdminSaving(true);
+    setAdminError('');
+    try {
+      const response = await fetch('/api/dashboard/registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          so_danh_bo: adminForm.soDanhBo,
+          nhom_phu_trach: adminForm.group,
+          loai_suat: adminForm.loaiSuat,
+          ngay_dang_ky: adminForm.ngayDangKy,
+          sl_cnv: adminForm.cnv,
+          sl_nha_thau: adminForm.contractor,
+        }),
+      });
+      const data = await response.json();
+      if (response.status === 401) {
+        router.replace('/dashboard/login');
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || 'Không thể lưu thay đổi.');
+      setAdminForm(null);
+      await loadData();
+      if (adminForm.ngayDangKy === today) await loadTodayReport();
+    } catch (error) {
+      setAdminError(error.message || 'Có lỗi xảy ra.');
+    } finally {
+      setAdminSaving(false);
+    }
+  }
+
   const exportUrl = `/api/dashboard/export?${new URLSearchParams({ from, to }).toString()}`;
 
   return (
@@ -212,6 +343,7 @@ export default function DashboardClient({ today }) {
           </div></label>
           <label className="toolbar-search"><span>Tìm kiếm</span><div className="toolbar-input"><Icon name="search" size={18} /><input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Số danh bộ / họ tên / nhóm" /></div></label>
           <a className="export-button" href={exportUrl}><Icon name="download" size={19} />Xuất Excel</a>
+          <button className="admin-add-button" type="button" onClick={openAddModal}><Icon name="plus" size={18} />Thêm đăng ký</button>
           <button className="refresh-button" onClick={refreshAll}><Icon name="refresh" size={18} />Cập nhật</button>
           <div className="updated-pill"><span />Đã cập nhật {updatedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
         </section>
@@ -259,7 +391,7 @@ export default function DashboardClient({ today }) {
             <div className="card-title"><div><Icon name="list" /><h2>Chi tiết đăng ký</h2></div><span>{filteredItems.length} bản ghi</span></div>
             <div className="table-scroll">
               <table>
-                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Xưởng Sửa chữa</th><th>Nhà thầu</th><th>Tổng</th><th>Trạng thái</th></tr></thead>
+                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Xưởng Sửa chữa</th><th>Nhà thầu</th><th>Tổng</th><th>Trạng thái</th><th /></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>
@@ -267,8 +399,9 @@ export default function DashboardClient({ today }) {
                       <td><span className={`type-badge ${item.loai_suat}`}>{MEAL_TYPE_LABELS[item.loai_suat] || item.loai_suat}</span></td>
                       <td>{item.sl_cnv}</td><td>{item.sl_nha_thau}</td><td><strong>{item.sl_cnv + item.sl_nha_thau}</strong></td>
                       <td><span className="table-status"><Icon name="check" size={15} />Đã xác nhận</span></td>
+                      <td><button type="button" className="table-edit-button" onClick={() => openEditModal(item)}><Icon name="edit" size={15} />Sửa</button></td>
                     </tr>
-                  )) : <tr><td colSpan="9" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
+                  )) : <tr><td colSpan="10" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -290,7 +423,11 @@ export default function DashboardClient({ today }) {
                   <span className="history-marker" />
                   <div className="history-body">
                     <div><strong>{row.ho_ten || row.so_danh_bo}</strong><time>{formatDateTime(row.thoi_gian)}</time></div>
-                    <p><span className={`type-badge ${row.loai_suat}`}>{MEAL_TYPE_LABELS[row.loai_suat] || row.loai_suat}</span> {row.nhom_phu_trach}</p>
+                    <p>
+                      <span className={`type-badge ${row.loai_suat}`}>{MEAL_TYPE_LABELS[row.loai_suat] || row.loai_suat}</span>{' '}
+                      {row.nhom_phu_trach}
+                      {String(row.hanh_dong || '').startsWith('Admin') && <span className="admin-badge">Quyền admin</span>}
+                    </p>
                     <small><HistoryChange row={row} /></small>
                   </div>
                 </div>
@@ -300,6 +437,18 @@ export default function DashboardClient({ today }) {
           </article>
         </section>
       </section>
+
+      {adminForm && (
+        <AdminRegistrationModal
+          mode={adminMode}
+          form={adminForm}
+          saving={adminSaving}
+          error={adminError}
+          onChange={setAdminForm}
+          onClose={closeAdminModal}
+          onSubmit={submitAdminForm}
+        />
+      )}
     </main>
   );
 }
