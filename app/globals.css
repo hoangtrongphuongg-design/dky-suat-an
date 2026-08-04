@@ -176,12 +176,12 @@ a { color: inherit; text-decoration: none; }
 .card-title > div { display: flex; align-items: center; gap: 8px; color: var(--blue-700); }
 .card-title h2 { margin: 0; color: var(--blue-950); font-size: 15px; }
 .card-title > span { padding: 6px 8px; border: 1px solid #e1e7ef; border-radius: 8px; color: #667085; font-size: 10px; font-weight: 700; }
-.bar-chart { display: grid; grid-template-columns: repeat(12,minmax(44px,1fr)); align-items: end; gap: 5px; height: 280px; padding: 18px 16px 14px; border-top: 1px solid #eef2f6; background: repeating-linear-gradient(to bottom,#fff 0,#fff 49px,#e8edf4 50px); overflow-x: auto; }
-.bar-column { display: grid; grid-template-rows: 20px 180px 44px; align-items: end; justify-items: center; min-width: 44px; height: 244px; }
+.bar-chart { display: grid; grid-template-columns: repeat(12,minmax(44px,1fr)); align-items: end; gap: 5px; height: 296px; padding: 18px 16px 14px; border-top: 1px solid #eef2f6; background: repeating-linear-gradient(to bottom,#fff 0,#fff 49px,#e8edf4 50px); overflow-x: auto; }
+.bar-column { display: grid; grid-template-rows: 20px 180px 56px; align-items: end; justify-items: center; width: 100%; min-width: 44px; height: 256px; }
 .bar-value { color: #344054; font-size: 10px; font-weight: 800; }
 .bar-track { position: relative; width: 26px; height: 180px; border-radius: 8px 8px 2px 2px; }
 .bar-fill { position: absolute; bottom: 0; width: 100%; height: var(--fill, 0%); min-height: 2px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg,#2489ff,#0a5cc5); box-shadow: 0 4px 9px rgba(22,119,255,.18); transition: height .3s ease; }
-.bar-label { align-self: start; width: 64px; margin-top: 7px; color: #4d5d73; font-size: 9px; line-height: 1.15; text-align: center; }
+.bar-label { align-self: start; width: 100%; margin-top: 7px; padding: 0 2px; color: #344054; font-weight: 700; font-size: 9px; line-height: 1.25; text-align: center; overflow-wrap: break-word; }
 .donut-content { display: flex; align-items: center; justify-content: space-evenly; gap: 28px; min-height: 280px; padding: 22px; border-top: 1px solid #eef2f6; }
 .donut { display: grid; place-items: center; flex: 0 0 auto; width: 174px; height: 174px; border-radius: 50%; }
 .donut > div { display: grid; place-items: center; width: 105px; height: 105px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 1px #f0f3f7; }
