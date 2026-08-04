@@ -3,11 +3,13 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
+    // [ĐÃ TẠM TẮT ĐỂ CHẠY THỬ] - Bỏ qua kiểm tra giờ
+    /* 
     const vnTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-    
     if (vnTime.getHours() >= 9) {
       return NextResponse.json({ error: "Đã qua 9h00 sáng, hệ thống đã khóa sổ đăng ký suất ăn xế hôm nay." }, { status: 403 });
     }
+    */
 
     const { so_danh_bo, sl_cnv, sl_nha_thau } = await request.json();
     const sql = neon(process.env.DATABASE_URL);
