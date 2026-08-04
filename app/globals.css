@@ -175,7 +175,7 @@ a { color: inherit; text-decoration: none; }
 .bar-column { display: grid; grid-template-rows: 20px 180px 44px; align-items: end; justify-items: center; min-width: 44px; height: 244px; }
 .bar-value { color: #344054; font-size: 10px; font-weight: 800; }
 .bar-track { position: relative; width: 26px; height: 180px; border-radius: 8px 8px 2px 2px; }
-.bar-fill { position: absolute; bottom: 0; width: 100%; min-height: 2px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg,#2489ff,#0a5cc5); box-shadow: 0 4px 9px rgba(22,119,255,.18); transition: height .3s ease; }
+.bar-fill { position: absolute; bottom: 0; width: 100%; height: var(--fill, 0%); min-height: 2px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg,#2489ff,#0a5cc5); box-shadow: 0 4px 9px rgba(22,119,255,.18); transition: height .3s ease; }
 .bar-label { align-self: start; width: 64px; margin-top: 7px; color: #4d5d73; font-size: 9px; line-height: 1.15; text-align: center; }
 .donut-content { display: flex; align-items: center; justify-content: space-evenly; gap: 28px; min-height: 280px; padding: 22px; border-top: 1px solid #eef2f6; }
 .donut { display: grid; place-items: center; flex: 0 0 auto; width: 174px; height: 174px; border-radius: 50%; }
@@ -256,6 +256,29 @@ td strong { color: #253b5f; }
   .toolbar-search { grid-column: 1 / -1; }
   .export-button, .refresh-button, .admin-add-button { width: 100%; }
   .kpi-grid { grid-template-columns: repeat(2,1fr); }
+}
+
+@media (max-width: 700px) {
+  /* Bảng chi tiết đăng ký: chuyển sang dạng thẻ xếp dọc để không cần cuộn ngang. */
+  .table-scroll { overflow-x: visible; }
+  .table-card table, .table-card thead, .table-card tbody, .table-card th, .table-card td, .table-card tr { display: block; }
+  .table-card thead { display: none; }
+  .table-card tbody tr { margin: 0 0 10px; border: 1px solid #eef2f6; border-radius: 12px; padding: 4px 12px; white-space: normal; }
+  .table-card tbody tr:last-child { margin-bottom: 0; }
+  .table-card td { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid #f4f6f9; white-space: normal; text-align: right; }
+  .table-card tr td:first-child { border-top: 0; }
+  .table-card td[data-label]:not([data-label=""])::before { content: attr(data-label); flex: 0 0 auto; color: #98a2b3; font-size: 9px; font-weight: 800; text-transform: uppercase; text-align: left; }
+  .table-card td[data-label=""] { justify-content: flex-end; }
+  .table-card tbody tr:has(.table-empty) { border: 0; padding: 0; }
+  .table-card td.table-empty { display: block; border-top: 0; text-align: center; }
+
+  /* Biểu đồ theo nhóm: chuyển cột dọc sang thanh ngang để không cần cuộn ngang. */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; height: auto; padding: 14px 16px 16px; overflow-x: visible; }
+  .bar-column { display: flex; align-items: center; gap: 10px; width: 100%; height: auto; min-width: 0; }
+  .bar-label { order: -1; width: 96px; flex: 0 0 auto; margin-top: 0; text-align: left; }
+  .bar-track { flex: 1; width: auto; height: 14px; }
+  .bar-fill { height: 100%; width: var(--fill, 0%); border-radius: 999px; }
+  .bar-value { width: 30px; flex: 0 0 auto; text-align: right; }
 }
 
 @media (max-width: 520px) {

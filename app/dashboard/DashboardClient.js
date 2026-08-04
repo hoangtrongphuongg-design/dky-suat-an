@@ -365,7 +365,7 @@ export default function DashboardClient({ today }) {
               {groupTotals.map((item) => (
                 <div className="bar-column" key={item.name}>
                   <div className="bar-value">{item.total}</div>
-                  <div className="bar-track"><div className="bar-fill" style={{ height: `${Math.max(item.total ? 8 : 0, item.total / maxGroup * 100)}%` }} /></div>
+                  <div className="bar-track"><div className="bar-fill" style={{ '--fill': `${Math.max(item.total ? 8 : 0, item.total / maxGroup * 100)}%` }} /></div>
                   <div className="bar-label" title={item.name}>{item.name}</div>
                 </div>
               ))}
@@ -395,11 +395,16 @@ export default function DashboardClient({ today }) {
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>
-                      <td>{formatDateTime(item.thoi_gian_nhap)}</td><td>{item.so_danh_bo}</td><td>{item.ho_ten || '—'}</td><td><strong>{item.nhom_phu_trach}</strong></td>
-                      <td><span className={`type-badge ${item.loai_suat}`}>{MEAL_TYPE_LABELS[item.loai_suat] || item.loai_suat}</span></td>
-                      <td>{item.sl_cnv}</td><td>{item.sl_nha_thau}</td><td><strong>{item.sl_cnv + item.sl_nha_thau}</strong></td>
-                      <td><span className="table-status"><Icon name="check" size={15} />Đã xác nhận</span></td>
-                      <td><button type="button" className="table-edit-button" onClick={() => openEditModal(item)}><Icon name="edit" size={15} />Sửa</button></td>
+                      <td data-label="Thời gian">{formatDateTime(item.thoi_gian_nhap)}</td>
+                      <td data-label="Số danh bộ">{item.so_danh_bo}</td>
+                      <td data-label="Họ tên">{item.ho_ten || '—'}</td>
+                      <td data-label="Nhóm"><strong>{item.nhom_phu_trach}</strong></td>
+                      <td data-label="Loại"><span className={`type-badge ${item.loai_suat}`}>{MEAL_TYPE_LABELS[item.loai_suat] || item.loai_suat}</span></td>
+                      <td data-label="Xưởng Sửa chữa">{item.sl_cnv}</td>
+                      <td data-label="Nhà thầu">{item.sl_nha_thau}</td>
+                      <td data-label="Tổng"><strong>{item.sl_cnv + item.sl_nha_thau}</strong></td>
+                      <td data-label="Trạng thái"><span className="table-status"><Icon name="check" size={15} />Đã xác nhận</span></td>
+                      <td data-label=""><button type="button" className="table-edit-button" onClick={() => openEditModal(item)}><Icon name="edit" size={15} />Sửa</button></td>
                     </tr>
                   )) : <tr><td colSpan="10" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
                 </tbody>
