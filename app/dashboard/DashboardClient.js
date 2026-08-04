@@ -13,7 +13,7 @@ const TYPE_FILTERS = [
   { value: 'all', label: 'Tất cả' },
 ];
 
-const EMPTY_ADMIN_FORM = { soDanhBo: '', hoTen: '', ngayDangKy: '', loaiSuat: 'xe', group: MECHANICAL_GROUPS[0], cnv: 0, contractor: 0 };
+const EMPTY_ADMIN_FORM = { soDanhBo: '', hoTen: '', ngayDangKy: '', loaiSuat: 'xe', group: MECHANICAL_GROUPS[0], cnv: 0, contractor: 0, ghiChu: '' };
 
 function formatDateTime(value) {
   if (!value) return '—';
@@ -94,6 +94,17 @@ function AdminRegistrationModal({ mode, form, saving, error, onChange, onClose, 
                 onChange={(event) => update({ contractor: Math.max(0, Math.trunc(Number(event.target.value)) || 0) })} />
             </label>
           </div>
+
+          <label className="field-label" htmlFor="admin-ghi-chu">Ghi chú (không bắt buộc)</label>
+          <textarea
+            id="admin-ghi-chu"
+            className="note-textarea"
+            rows={2}
+            maxLength={500}
+            placeholder="Lý do đăng ký suất ăn..."
+            value={form.ghiChu}
+            onChange={(event) => update({ ghiChu: event.target.value })}
+          />
 
           {error && <p className="modal-error">{error}</p>}
 
@@ -249,6 +260,7 @@ export default function DashboardClient({ today }) {
       group: item.nhom_phu_trach,
       cnv: Number(item.sl_cnv || 0),
       contractor: Number(item.sl_nha_thau || 0),
+      ghiChu: item.ghi_chu || '',
     });
   }
 
@@ -272,6 +284,7 @@ export default function DashboardClient({ today }) {
           ngay_dang_ky: adminForm.ngayDangKy,
           sl_cnv: adminForm.cnv,
           sl_nha_thau: adminForm.contractor,
+          ghi_chu: adminForm.ghiChu,
         }),
       });
       const data = await response.json();
@@ -396,11 +409,11 @@ export default function DashboardClient({ today }) {
             <div className="table-scroll">
               <table>
                 <colgroup>
-                  <col style={{ width: '14%' }} /><col style={{ width: '10%' }} /><col style={{ width: '17%' }} />
-                  <col style={{ width: '20%' }} /><col style={{ width: '9%' }} /><col style={{ width: '12%' }} />
-                  <col style={{ width: '10%' }} /><col style={{ width: '8%' }} /><col style={{ width: '9%' }} />
+                  <col style={{ width: '11%' }} /><col style={{ width: '8%' }} /><col style={{ width: '12%' }} />
+                  <col style={{ width: '14%' }} /><col style={{ width: '7%' }} /><col style={{ width: '15%' }} />
+                  <col style={{ width: '9%' }} /><col style={{ width: '8%' }} /><col style={{ width: '6%' }} /><col style={{ width: '10%' }} />
                 </colgroup>
-                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th title="Xưởng Sửa chữa">Xưởng SC</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
+                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Ghi chú</th><th title="Xưởng Sửa chữa">Xưởng SC</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>
@@ -409,12 +422,13 @@ export default function DashboardClient({ today }) {
                       <td data-label="Họ tên">{item.ho_ten || '—'}</td>
                       <td data-label="Nhóm"><strong>{item.nhom_phu_trach}</strong></td>
                       <td data-label="Loại"><span className={`type-badge ${item.loai_suat}`}>{MEAL_TYPE_LABELS[item.loai_suat] || item.loai_suat}</span></td>
+                      <td data-label="Ghi chú" title={item.ghi_chu || ''}>{item.ghi_chu || '—'}</td>
                       <td data-label="Xưởng Sửa chữa">{item.sl_cnv}</td>
                       <td data-label="Nhà thầu">{item.sl_nha_thau}</td>
                       <td data-label="Tổng"><strong>{item.sl_cnv + item.sl_nha_thau}</strong></td>
                       <td data-label=""><button type="button" className="table-edit-button" onClick={() => openEditModal(item)}><Icon name="edit" size={15} />Sửa</button></td>
                     </tr>
-                  )) : <tr><td colSpan="9" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
+                  )) : <tr><td colSpan="10" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
                 </tbody>
               </table>
             </div>

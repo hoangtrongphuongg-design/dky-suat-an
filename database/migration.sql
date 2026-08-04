@@ -186,3 +186,8 @@ ALTER TABLE lich_su_dang_ky_suat_an
 
 CREATE INDEX IF NOT EXISTS idx_lich_su_dang_ky_ngay_dang_ky
   ON lich_su_dang_ky_suat_an (ngay_dang_ky DESC);
+
+-- Ghi chú tùy chọn: trưởng nhóm ghi lý do đăng ký suất ăn hôm đó (không
+-- bắt buộc), hiển thị trên dashboard và trong file xuất Excel.
+ALTER TABLE dang_ky_suat_an
+  ADD COLUMN IF NOT EXISTS ghi_chu TEXT;

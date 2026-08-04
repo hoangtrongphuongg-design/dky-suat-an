@@ -21,7 +21,7 @@ export async function POST(request) {
 
   const checked = validateAdminRegistration(body);
   if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
-  const { soDanhBo, group, loaiSuat, ngayDangKy, cnv, contractor } = checked.value;
+  const { soDanhBo, group, loaiSuat, ngayDangKy, cnv, contractor, ghiChu } = checked.value;
   const ip = getClientIp(request);
 
   try {
@@ -44,15 +44,16 @@ export async function POST(request) {
           AND loai_suat = ${loaiSuat}
       ), upserted AS (
         INSERT INTO dang_ky_suat_an (
-          so_danh_bo, ngay_dang_ky, sl_cnv, sl_nha_thau, nhom_phu_trach, loai_suat, thoi_gian_nhap
+          so_danh_bo, ngay_dang_ky, sl_cnv, sl_nha_thau, nhom_phu_trach, loai_suat, ghi_chu, thoi_gian_nhap
         )
-        VALUES (${soDanhBo}, ${ngayDangKy}::date, ${cnv}, ${contractor}, ${group}, ${loaiSuat}, CURRENT_TIMESTAMP)
+        VALUES (${soDanhBo}, ${ngayDangKy}::date, ${cnv}, ${contractor}, ${group}, ${loaiSuat}, ${ghiChu}, CURRENT_TIMESTAMP)
         ON CONFLICT (so_danh_bo, ngay_dang_ky, nhom_phu_trach, loai_suat)
         DO UPDATE SET
           sl_cnv = EXCLUDED.sl_cnv,
           sl_nha_thau = EXCLUDED.sl_nha_thau,
+          ghi_chu = EXCLUDED.ghi_chu,
           thoi_gian_nhap = CURRENT_TIMESTAMP
-        RETURNING id, so_danh_bo, nhom_phu_trach, loai_suat, ngay_dang_ky, sl_cnv, sl_nha_thau, thoi_gian_nhap
+        RETURNING id, so_danh_bo, nhom_phu_trach, loai_suat, ngay_dang_ky, sl_cnv, sl_nha_thau, ghi_chu, thoi_gian_nhap
       ), audited AS (
         INSERT INTO lich_su_dang_ky_suat_an (
           dang_ky_id, so_danh_bo, nhom_phu_trach, loai_suat, ngay_dang_ky,

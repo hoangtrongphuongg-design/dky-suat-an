@@ -40,6 +40,7 @@ export default function RegistrationPage() {
   const [group, setGroup] = useState(MECHANICAL_GROUPS[0]);
   const [cnv, setCnv] = useState(0);
   const [contractor, setContractor] = useState(0);
+  const [note, setNote] = useState('');
   const [items, setItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -134,6 +135,7 @@ export default function RegistrationPage() {
           loai_suat: mealType,
           sl_cnv: cnv,
           sl_nha_thau: contractor,
+          ghi_chu: note,
         }),
       });
       const data = await response.json();
@@ -142,6 +144,7 @@ export default function RegistrationPage() {
       await loadToday(employeeId.trim(), mealType);
       setCnv(0);
       setContractor(0);
+      setNote('');
       document.getElementById('today-list')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (error) {
       setNotice({ type: 'error', text: error.message || 'Có lỗi xảy ra.' });
@@ -154,6 +157,7 @@ export default function RegistrationPage() {
     setGroup(item.nhom_phu_trach);
     setCnv(Number(item.sl_cnv || 0));
     setContractor(Number(item.sl_nha_thau || 0));
+    setNote(item.ghi_chu || '');
     window.scrollTo({ top: 230, behavior: 'smooth' });
   }
 
@@ -257,6 +261,17 @@ export default function RegistrationPage() {
             </div>
             <div className="quantity-total"><span>Tổng số suất</span><strong>{total}</strong></div>
             {total === 0 && <p className="validation-note">Ít nhất một loại suất ăn phải lớn hơn 0.</p>}
+
+            <label className="field-label" htmlFor="note">Ghi chú (không bắt buộc)</label>
+            <textarea
+              id="note"
+              className="note-textarea"
+              rows={2}
+              maxLength={500}
+              placeholder="Lý do đăng ký suất ăn hôm nay (nếu có)..."
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+            />
 
             <button className="primary-button" type="submit" disabled={!canSubmit}>
               {submitting ? <span className="button-spinner" /> : <Icon name="check" />}

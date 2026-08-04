@@ -30,14 +30,14 @@ export async function GET(request) {
     const rows = await sql`
       SELECT
         d.ngay_dang_ky, d.thoi_gian_nhap, d.so_danh_bo, n.ho_ten,
-        d.nhom_phu_trach, d.loai_suat, d.sl_cnv, d.sl_nha_thau
+        d.nhom_phu_trach, d.loai_suat, d.sl_cnv, d.sl_nha_thau, d.ghi_chu
       FROM dang_ky_suat_an d
       LEFT JOIN nhan_vien n ON n.so_danh_bo = d.so_danh_bo
       WHERE d.ngay_dang_ky BETWEEN ${from}::date AND ${to}::date
       ORDER BY d.ngay_dang_ky DESC, d.thoi_gian_nhap DESC
     `;
 
-    const header = ['Ngày', 'Loại', 'Thời gian ghi nhận', 'Số danh bộ', 'Họ tên', 'Nhóm', 'Xưởng Sửa chữa', 'Nhà thầu', 'Tổng'];
+    const header = ['Ngày', 'Loại', 'Thời gian ghi nhận', 'Số danh bộ', 'Họ tên', 'Nhóm', 'Xưởng Sửa chữa', 'Nhà thầu', 'Tổng', 'Ghi chú'];
     const lines = [header.map(csvCell).join(';')];
     for (const row of rows) {
       const cnv = Number(row.sl_cnv || 0);
@@ -52,6 +52,7 @@ export async function GET(request) {
         cnv,
         contractor,
         cnv + contractor,
+        row.ghi_chu || '',
       ].map(csvCell).join(';'));
     }
 
