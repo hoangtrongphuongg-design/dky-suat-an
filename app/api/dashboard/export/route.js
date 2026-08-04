@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { DASHBOARD_COOKIE, verifyDashboardSession } from '@/lib/dashboardAuth';
 import { getSql } from '@/lib/db';
+import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
 import { getVietnamDate } from '@/lib/time';
 import { isIsoDate } from '@/lib/validation';
 
@@ -29,20 +30,21 @@ export async function GET(request) {
     const rows = await sql`
       SELECT
         d.ngay_dang_ky, d.thoi_gian_nhap, d.so_danh_bo, n.ho_ten,
-        d.nhom_phu_trach, d.sl_cnv, d.sl_nha_thau
+        d.nhom_phu_trach, d.loai_suat, d.sl_cnv, d.sl_nha_thau
       FROM dang_ky_suat_an d
       LEFT JOIN nhan_vien n ON n.so_danh_bo = d.so_danh_bo
       WHERE d.ngay_dang_ky BETWEEN ${from}::date AND ${to}::date
       ORDER BY d.ngay_dang_ky DESC, d.thoi_gian_nhap DESC
     `;
 
-    const header = ['Ngày', 'Thời gian ghi nhận', 'Số danh bộ', 'Họ tên', 'Nhóm', 'Xưởng Sửa chữa', 'Nhà thầu', 'Tổng'];
+    const header = ['Ngày', 'Loại', 'Thời gian ghi nhận', 'Số danh bộ', 'Họ tên', 'Nhóm', 'Xưởng Sửa chữa', 'Nhà thầu', 'Tổng'];
     const lines = [header.map(csvCell).join(';')];
     for (const row of rows) {
       const cnv = Number(row.sl_cnv || 0);
       const contractor = Number(row.sl_nha_thau || 0);
       lines.push([
         row.ngay_dang_ky,
+        MEAL_TYPE_LABELS[row.loai_suat] || row.loai_suat,
         new Date(row.thoi_gian_nhap).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),
         row.so_danh_bo,
         row.ho_ten || '',

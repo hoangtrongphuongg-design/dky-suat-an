@@ -132,3 +132,57 @@ CREATE INDEX IF NOT EXISTS idx_lich_su_dang_ky_so_danh_bo
 -- ALTER TABLE dang_ky_suat_an
 --   ADD CONSTRAINT fk_dang_ky_nhan_vien
 --   FOREIGN KEY (so_danh_bo) REFERENCES nhan_vien(so_danh_bo);
+
+-- ============================================================
+-- Suất ăn đêm: thêm loai_suat ('xe' | 'dem') để phân biệt suất
+-- ăn xế (ăn cùng ngày, chốt 9h sáng cùng ngày) và suất ăn đêm
+-- (ăn 23h ngày X, chốt 9h sáng ngày X). ngay_dang_ky luôn là
+-- ngày ĂN, không phải ngày nhập liệu.
+-- ============================================================
+
+ALTER TABLE dang_ky_suat_an
+  ADD COLUMN IF NOT EXISTS loai_suat VARCHAR(10) NOT NULL DEFAULT 'xe';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'ck_dang_ky_suat_an_loai_suat'
+  ) THEN
+    ALTER TABLE dang_ky_suat_an
+      ADD CONSTRAINT ck_dang_ky_suat_an_loai_suat CHECK (loai_suat IN ('xe', 'dem'));
+  END IF;
+END $$;
+
+-- Đổi unique index sang 4 cột (thêm loai_suat) để 1 người có thể
+-- đăng ký cả suất xế lẫn suất đêm cho cùng nhóm/ngày mà không đụng nhau.
+-- Phải DROP index cũ trước khi tạo index mới TÊN MỚI — nếu tái dùng
+-- đúng tên cũ với IF NOT EXISTS, Postgres sẽ bỏ qua vì tên đã tồn tại
+-- và constraint cũ (3 cột) vẫn còn hiệu lực, khiến ON CONFLICT (4 cột)
+-- trong code lỗi ngay khi ghi dữ liệu.
+DROP INDEX IF EXISTS uq_dang_ky_suat_an_nguoi_ngay_nhom;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_dang_ky_suat_an_nguoi_ngay_nhom_loai
+  ON dang_ky_suat_an (so_danh_bo, ngay_dang_ky, nhom_phu_trach, loai_suat);
+
+ALTER TABLE lich_su_dang_ky_suat_an
+  ADD COLUMN IF NOT EXISTS loai_suat VARCHAR(10) NOT NULL DEFAULT 'xe';
+
+-- ngay_dang_ky trong lịch sử: dùng để lọc theo ngày ĂN thay vì ngày
+-- nhập (thoi_gian), vì suất đêm có 2 ngày này lệch nhau 1 hôm.
+ALTER TABLE lich_su_dang_ky_suat_an
+  ADD COLUMN IF NOT EXISTS ngay_dang_ky DATE;
+
+UPDATE lich_su_dang_ky_suat_an l
+SET ngay_dang_ky = d.ngay_dang_ky
+FROM dang_ky_suat_an d
+WHERE d.id = l.dang_ky_id AND l.ngay_dang_ky IS NULL;
+
+UPDATE lich_su_dang_ky_suat_an
+SET ngay_dang_ky = (thoi_gian AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
+WHERE ngay_dang_ky IS NULL;
+
+ALTER TABLE lich_su_dang_ky_suat_an
+  ALTER COLUMN ngay_dang_ky SET NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_lich_su_dang_ky_ngay_dang_ky
+  ON lich_su_dang_ky_suat_an (ngay_dang_ky DESC);

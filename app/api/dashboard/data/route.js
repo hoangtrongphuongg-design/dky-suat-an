@@ -29,7 +29,7 @@ export async function GET(request) {
       sql`
         SELECT
           d.id, d.ngay_dang_ky, d.so_danh_bo, n.ho_ten,
-          d.nhom_phu_trach, d.sl_cnv, d.sl_nha_thau, d.thoi_gian_nhap
+          d.nhom_phu_trach, d.loai_suat, d.sl_cnv, d.sl_nha_thau, d.thoi_gian_nhap
         FROM dang_ky_suat_an d
         LEFT JOIN nhan_vien n ON n.so_danh_bo = d.so_danh_bo
         WHERE d.ngay_dang_ky BETWEEN ${from}::date AND ${to}::date
@@ -37,14 +37,13 @@ export async function GET(request) {
       `,
       sql`
         SELECT
-          l.id, l.thoi_gian, l.so_danh_bo, n.ho_ten, l.nhom_phu_trach,
+          l.id, l.thoi_gian, l.so_danh_bo, n.ho_ten, l.nhom_phu_trach, l.loai_suat,
           l.sl_cnv_truoc, l.sl_cnv_sau,
           l.sl_nha_thau_truoc, l.sl_nha_thau_sau,
           l.hanh_dong
         FROM lich_su_dang_ky_suat_an l
         LEFT JOIN nhan_vien n ON n.so_danh_bo = l.so_danh_bo
-        WHERE (l.thoi_gian AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
-          BETWEEN ${from}::date AND ${to}::date
+        WHERE l.ngay_dang_ky BETWEEN ${from}::date AND ${to}::date
         ORDER BY l.thoi_gian DESC
         LIMIT 200
       `,

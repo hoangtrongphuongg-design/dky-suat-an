@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/components/Icons';
 import { ELECTRICAL_GROUPS, MECHANICAL_GROUPS } from '@/lib/groups';
+import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
 
 const DEFAULT_CONFIG = {
-  dateLabel: 'Hôm nay',
-  cutoff: null,
-  locked: false,
+  xe: { date: '', dateLabel: 'Hôm nay', cutoff: null, locked: false },
+  dem: { date: '', dateLabel: 'Ngày mai', cutoff: null },
 };
 
 function Quantity({ label, value, onChange }) {
@@ -33,6 +33,7 @@ function Quantity({ label, value, onChange }) {
 
 export default function RegistrationPage() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [mealType, setMealType] = useState('xe');
   const [employeeId, setEmployeeId] = useState('');
   const [employeeName, setEmployeeName] = useState('');
   const [employeeState, setEmployeeState] = useState('idle');
@@ -43,6 +44,7 @@ export default function RegistrationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
   const abortRef = useRef(null);
+  const active = config[mealType] || DEFAULT_CONFIG[mealType];
 
   useEffect(() => {
     fetch('/api/config', { cache: 'no-store' })
@@ -51,10 +53,11 @@ export default function RegistrationPage() {
       .catch(() => setConfig(DEFAULT_CONFIG));
   }, []);
 
-  const loadToday = useCallback(async (id) => {
+  const loadToday = useCallback(async (id, type) => {
     if (!id) return setItems([]);
     try {
-      const response = await fetch(`/api/dang-ky?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+      const params = new URLSearchParams({ id, loai: type });
+      const response = await fetch(`/api/dang-ky?${params}`, { cache: 'no-store' });
       const data = await response.json();
       if (response.ok) setItems(data.items || []);
     } catch {
@@ -86,7 +89,7 @@ export default function RegistrationPage() {
         if (!response.ok) throw new Error(data.error || 'Không tìm thấy nhân viên.');
         setEmployeeName(data.ho_ten);
         setEmployeeState('valid');
-        loadToday(id);
+        loadToday(id, mealType);
       } catch (error) {
         if (error.name === 'AbortError') return;
         setEmployeeName(error.message || 'Không thể tra cứu danh bộ.');
@@ -95,10 +98,21 @@ export default function RegistrationPage() {
     }, 350);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mealType switches are handled by the effect below
   }, [employeeId, loadToday]);
 
+  useEffect(() => {
+    setGroup(MECHANICAL_GROUPS[0]);
+    setCnv(0);
+    setContractor(0);
+    setNotice(null);
+    const id = employeeId.trim();
+    if (employeeState === 'valid' && id.length >= 4) loadToday(id, mealType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to explicit type switches
+  }, [mealType]);
+
   const total = cnv + contractor;
-  const canSubmit = employeeState === 'valid' && total > 0 && !submitting && !config.locked;
+  const canSubmit = employeeState === 'valid' && total > 0 && !submitting && !active.locked;
 
   const currentAction = useMemo(
     () => items.some((item) => item.nhom_phu_trach === group) ? 'Cập nhật đăng ký' : 'Xác nhận đăng ký',
@@ -117,6 +131,7 @@ export default function RegistrationPage() {
         body: JSON.stringify({
           so_danh_bo: employeeId.trim(),
           nhom_phu_trach: group,
+          loai_suat: mealType,
           sl_cnv: cnv,
           sl_nha_thau: contractor,
         }),
@@ -124,7 +139,7 @@ export default function RegistrationPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Không thể lưu đăng ký.');
       setNotice({ type: 'success', text: data.message });
-      await loadToday(employeeId.trim());
+      await loadToday(employeeId.trim(), mealType);
       setCnv(0);
       setContractor(0);
       document.getElementById('today-list')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -162,12 +177,28 @@ export default function RegistrationPage() {
       </header>
 
       <section className="registration-content">
+        <div className="meal-type-toggle" role="tablist" aria-label="Loại suất ăn">
+          <button type="button" role="tab" aria-selected={mealType === 'xe'} className={mealType === 'xe' ? 'active' : ''} onClick={() => setMealType('xe')}>
+            <Icon name="food" size={18} /> Suất xế
+          </button>
+          <button type="button" role="tab" aria-selected={mealType === 'dem'} className={mealType === 'dem' ? 'active' : ''} onClick={() => setMealType('dem')}>
+            <Icon name="moon" size={18} /> Suất đêm
+          </button>
+        </div>
+
         <div className="date-status-card">
-          <div className="date-line"><Icon name="calendar" size={20} /><strong>{config.dateLabel}</strong></div>
-          <span className={`status-pill ${config.locked ? 'locked' : 'open'}`}>
-            <span className="status-dot" />
-            {config.locked ? 'Đã khóa đăng ký' : 'Đang mở đăng ký'}
-          </span>
+          <div className="date-line"><Icon name="calendar" size={20} /><strong>{active.dateLabel}</strong></div>
+          {mealType === 'xe' ? (
+            <span className={`status-pill ${active.locked ? 'locked' : 'open'}`}>
+              <span className="status-dot" />
+              {active.locked ? 'Đã khóa đăng ký' : 'Đang mở đăng ký'}
+            </span>
+          ) : (
+            <span className="status-pill open">
+              <span className="status-dot" />
+              {active.cutoff ? `Chốt lúc ${active.cutoff} ngày ăn` : 'Đang mở đăng ký'}
+            </span>
+          )}
         </div>
 
         <form onSubmit={submit} className="registration-form">
@@ -195,7 +226,11 @@ export default function RegistrationPage() {
             <div className={`read-only-field ${employeeState === 'invalid' ? 'error-text' : ''}`} id="employee-name">
               {employeeName || 'Họ tên sẽ tự động hiển thị'}
             </div>
-            <p className="helper-text">Trưởng nhóm có thể cập nhật nhiều lần trước giờ khóa{config.cutoff ? ` ${config.cutoff}` : ''}.</p>
+            <p className="helper-text">
+              {mealType === 'xe'
+                ? `Trưởng nhóm có thể cập nhật nhiều lần trước giờ khóa${active.cutoff ? ` ${active.cutoff}` : ''}.`
+                : `Đăng ký dự kiến cho ca đêm, có thể cập nhật nhiều lần trước ${active.cutoff || '09:00'} ngày ăn.`}
+            </p>
           </section>
 
           <section className="form-card">
@@ -246,15 +281,15 @@ export default function RegistrationPage() {
           <div className="today-header">
             <div className="section-heading compact">
               <span className="section-icon"><Icon name="list" /></span>
-              <div><span className="section-kicker">Hôm nay</span><h2>Đăng ký của trưởng nhóm</h2></div>
+              <div><span className="section-kicker">{MEAL_TYPE_LABELS[mealType]} · {active.dateLabel}</span><h2>Đăng ký của trưởng nhóm</h2></div>
             </div>
             <span className="record-count">{items.length} nhóm</span>
           </div>
 
           {employeeState !== 'valid' ? (
-            <div className="empty-state"><Icon name="user" size={30} /><p>Nhập số danh bộ để xem các đăng ký hôm nay.</p></div>
+            <div className="empty-state"><Icon name="user" size={30} /><p>Nhập số danh bộ để xem các đăng ký đã lưu.</p></div>
           ) : items.length === 0 ? (
-            <div className="empty-state"><Icon name="list" size={30} /><p>Chưa có nhóm nào được đăng ký hôm nay.</p></div>
+            <div className="empty-state"><Icon name="list" size={30} /><p>Chưa có nhóm nào được đăng ký cho {active.dateLabel}.</p></div>
           ) : (
             <div className="today-list">
               {items.map((item) => (
@@ -263,7 +298,7 @@ export default function RegistrationPage() {
                     <strong>{item.nhom_phu_trach}</strong>
                     <span>{Number(item.sl_cnv)} Xưởng Sửa chữa&nbsp;&nbsp;/&nbsp;&nbsp;{Number(item.sl_nha_thau)} NT</span>
                   </div>
-                  <button type="button" onClick={() => editItem(item)} disabled={config.locked}>
+                  <button type="button" onClick={() => editItem(item)} disabled={active.locked}>
                     <Icon name="edit" size={18} /> Sửa
                   </button>
                 </div>
