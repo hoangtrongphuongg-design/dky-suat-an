@@ -27,7 +27,7 @@ function KpiCard({ tone, icon, label, value }) {
 
 function HistoryChange({ row }) {
   const changes = [];
-  if (row.sl_cnv_truoc !== row.sl_cnv_sau) changes.push(`CNV: ${row.sl_cnv_truoc ?? 0} → ${row.sl_cnv_sau}`);
+  if (row.sl_cnv_truoc !== row.sl_cnv_sau) changes.push(`Xưởng Sửa chữa: ${row.sl_cnv_truoc ?? 0} → ${row.sl_cnv_sau}`);
   if (row.sl_nha_thau_truoc !== row.sl_nha_thau_sau) changes.push(`Nhà thầu: ${row.sl_nha_thau_truoc ?? 0} → ${row.sl_nha_thau_sau}`);
   return <>{changes.length ? changes.join(' · ') : row.hanh_dong}</>;
 }
@@ -147,7 +147,7 @@ export default function DashboardClient({ today }) {
 
         <section className="kpi-grid" aria-busy={loading}>
           <KpiCard tone="blue" icon="food" label="Tổng suất" value={summary.total} />
-          <KpiCard tone="blue" icon="user" label="CNV" value={summary.cnv} />
+          <KpiCard tone="blue" icon="user" label="Xưởng Sửa chữa" value={summary.cnv} />
           <KpiCard tone="orange" icon="food" label="Nhà thầu" value={summary.contractor} />
           <KpiCard tone="purple" icon="users" label="Số nhóm đã đăng ký" value={summary.groups} />
           <KpiCard tone="teal" icon="check" label="Số trưởng nhóm đã nhập" value={summary.leaders} />
@@ -168,13 +168,13 @@ export default function DashboardClient({ today }) {
           </article>
 
           <article className="dashboard-card donut-card">
-            <div className="card-title"><div><Icon name="chart" /><h2>Tỷ lệ CNV / Nhà thầu</h2></div></div>
+            <div className="card-title"><div><Icon name="chart" /><h2>Tỷ lệ Xưởng Sửa chữa / Nhà thầu</h2></div></div>
             <div className="donut-content">
               <div className="donut" style={{ background: `conic-gradient(#1677ff 0 ${cnvPct}%, #ff7a1a ${cnvPct}% 100%)` }}>
                 <div><strong>{summary.total}</strong><span>Tổng suất</span></div>
               </div>
               <div className="donut-legend">
-                <div><span className="legend-dot blue" /><p><strong>CNV</strong><small>{summary.cnv} ({cnvPct.toFixed(1)}%)</small></p></div>
+                <div><span className="legend-dot blue" /><p><strong>Xưởng Sửa chữa</strong><small>{summary.cnv} ({cnvPct.toFixed(1)}%)</small></p></div>
                 <div><span className="legend-dot orange" /><p><strong>Nhà thầu</strong><small>{summary.contractor} ({contractorPct.toFixed(1)}%)</small></p></div>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function DashboardClient({ today }) {
             <div className="card-title"><div><Icon name="list" /><h2>Chi tiết đăng ký</h2></div><span>{items.length} bản ghi</span></div>
             <div className="table-scroll">
               <table>
-                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>CNV</th><th>Nhà thầu</th><th>Tổng</th><th>Trạng thái</th></tr></thead>
+                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Xưởng Sửa chữa</th><th>Nhà thầu</th><th>Tổng</th><th>Trạng thái</th></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>

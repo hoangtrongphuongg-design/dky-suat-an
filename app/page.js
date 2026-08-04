@@ -224,7 +224,7 @@ export default function RegistrationPage() {
               <div><span className="section-kicker">Bước 3</span><h2>Số lượng suất ăn</h2></div>
             </div>
             <div className="quantity-grid">
-              <Quantity label="Suất CNV" value={cnv} onChange={setCnv} />
+              <Quantity label="Suất Xưởng Sửa chữa" value={cnv} onChange={setCnv} />
               <Quantity label="Suất nhà thầu" value={contractor} onChange={setContractor} />
             </div>
             <div className="quantity-total"><span>Tổng số suất</span><strong>{total}</strong></div>
@@ -261,7 +261,7 @@ export default function RegistrationPage() {
                 <div className="today-row" key={item.id || item.nhom_phu_trach}>
                   <div className="today-row-main">
                     <strong>{item.nhom_phu_trach}</strong>
-                    <span>{Number(item.sl_cnv)} CNV&nbsp;&nbsp;/&nbsp;&nbsp;{Number(item.sl_nha_thau)} NT</span>
+                    <span>{Number(item.sl_cnv)} Xưởng Sửa chữa&nbsp;&nbsp;/&nbsp;&nbsp;{Number(item.sl_nha_thau)} NT</span>
                   </div>
                   <button type="button" onClick={() => editItem(item)} disabled={config.locked}>
                     <Icon name="edit" size={18} /> Sửa

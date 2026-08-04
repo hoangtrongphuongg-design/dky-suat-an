@@ -10,7 +10,7 @@
 - Có thể cập nhật nhiều lần trước giờ khóa; lần sau thay thế số liệu của đúng nhóm đó.
 - Lưu lịch sử giá trị trước/sau cho từng lần cập nhật.
 - Dashboard có mã xem 4 chữ số, phiên xem 8 giờ.
-- Dashboard có KPI, biểu đồ nhóm, tỷ lệ CNV/nhà thầu, chi tiết và lịch sử.
+- Dashboard có KPI, biểu đồ nhóm, tỷ lệ Xưởng Sửa chữa/nhà thầu, chi tiết và lịch sử.
 - Lọc theo khoảng ngày, tìm kiếm và xuất CSV mở trực tiếp bằng Excel.
 - Xử lý ngày theo múi giờ `Asia/Ho_Chi_Minh`.
 - Kiểm tra dữ liệu phía API và giới hạn tần suất cơ bản.

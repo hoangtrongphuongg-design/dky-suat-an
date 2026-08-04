@@ -33,7 +33,7 @@ export async function GET(request) {
       ORDER BY d.ngay_dang_ky DESC, d.thoi_gian_nhap DESC
     `;
 
-    const header = ['Ngày', 'Thời gian ghi nhận', 'Số danh bộ', 'Họ tên', 'Nhóm', 'CNV', 'Nhà thầu', 'Tổng'];
+    const header = ['Ngày', 'Thời gian ghi nhận', 'Số danh bộ', 'Họ tên', 'Nhóm', 'Xưởng Sửa chữa', 'Nhà thầu', 'Tổng'];
     const lines = [header.map(csvCell).join(';')];
     for (const row of rows) {
       const cnv = Number(row.sl_cnv || 0);
