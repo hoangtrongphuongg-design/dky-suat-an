@@ -391,7 +391,12 @@ export default function DashboardClient({ today }) {
             <div className="card-title"><div><Icon name="list" /><h2>Chi tiết đăng ký</h2></div><span>{filteredItems.length} bản ghi</span></div>
             <div className="table-scroll">
               <table>
-                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Xưởng Sửa chữa</th><th>Nhà thầu</th><th>Tổng</th><th>Trạng thái</th><th /></tr></thead>
+                <colgroup>
+                  <col style={{ width: '14%' }} /><col style={{ width: '10%' }} /><col style={{ width: '17%' }} />
+                  <col style={{ width: '20%' }} /><col style={{ width: '9%' }} /><col style={{ width: '12%' }} />
+                  <col style={{ width: '10%' }} /><col style={{ width: '8%' }} /><col style={{ width: '9%' }} />
+                </colgroup>
+                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th title="Xưởng Sửa chữa">Xưởng SC</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>
@@ -403,10 +408,9 @@ export default function DashboardClient({ today }) {
                       <td data-label="Xưởng Sửa chữa">{item.sl_cnv}</td>
                       <td data-label="Nhà thầu">{item.sl_nha_thau}</td>
                       <td data-label="Tổng"><strong>{item.sl_cnv + item.sl_nha_thau}</strong></td>
-                      <td data-label="Trạng thái"><span className="table-status"><Icon name="check" size={15} />Đã xác nhận</span></td>
                       <td data-label=""><button type="button" className="table-edit-button" onClick={() => openEditModal(item)}><Icon name="edit" size={15} />Sửa</button></td>
                     </tr>
-                  )) : <tr><td colSpan="10" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
+                  )) : <tr><td colSpan="9" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
                 </tbody>
               </table>
             </div>
