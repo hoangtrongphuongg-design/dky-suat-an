@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/Icons';
 import { ELECTRICAL_GROUPS, GROUPS, MECHANICAL_GROUPS } from '@/lib/groups';
-import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
+import { MEAL_TYPE_LABELS, MEAL_TYPE_SHORT_LABELS } from '@/lib/mealTypes';
 
 const PAGE_SIZE = 8;
 const TYPE_FILTERS = [
@@ -20,6 +20,15 @@ function formatDateTime(value) {
   return new Intl.DateTimeFormat('vi-VN', {
     timeZone: 'Asia/Ho_Chi_Minh',
     day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).format(new Date(value));
+}
+
+function formatShortDateTime(value) {
+  if (!value) return '—';
+  return new Intl.DateTimeFormat('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit', month: '2-digit',
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).format(new Date(value));
 }
@@ -409,19 +418,19 @@ export default function DashboardClient({ today }) {
             <div className="table-scroll">
               <table>
                 <colgroup>
-                  <col style={{ width: '12%' }} /><col style={{ width: '8%' }} /><col style={{ width: '12%' }} />
-                  <col style={{ width: '12%' }} /><col style={{ width: '9%' }} /><col style={{ width: '15%' }} />
-                  <col style={{ width: '8%' }} /><col style={{ width: '7%' }} /><col style={{ width: '6%' }} /><col style={{ width: '11%' }} />
+                  <col style={{ width: '9%' }} /><col style={{ width: '8%' }} /><col style={{ width: '13%' }} />
+                  <col style={{ width: '13%' }} /><col style={{ width: '5%' }} /><col style={{ width: '17%' }} />
+                  <col style={{ width: '9%' }} /><col style={{ width: '9%' }} /><col style={{ width: '6%' }} /><col style={{ width: '11%' }} />
                 </colgroup>
                 <thead><tr><th>Thời gian</th><th title="Số danh bộ">Danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Ghi chú</th><th title="Xưởng Sửa chữa">Xưởng SC</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>
-                      <td data-label="Thời gian">{formatDateTime(item.thoi_gian_nhap)}</td>
+                      <td data-label="Thời gian" title={formatDateTime(item.thoi_gian_nhap)}>{formatShortDateTime(item.thoi_gian_nhap)}</td>
                       <td data-label="Số danh bộ">{item.so_danh_bo}</td>
                       <td data-label="Họ tên">{item.ho_ten || '—'}</td>
                       <td data-label="Nhóm"><strong>{item.nhom_phu_trach}</strong></td>
-                      <td data-label="Loại"><span className={`type-badge ${item.loai_suat}`}>{MEAL_TYPE_LABELS[item.loai_suat] || item.loai_suat}</span></td>
+                      <td data-label="Loại" title={MEAL_TYPE_LABELS[item.loai_suat] || ''}>{MEAL_TYPE_SHORT_LABELS[item.loai_suat] || item.loai_suat}</td>
                       <td data-label="Ghi chú" title={item.ghi_chu || ''}>{item.ghi_chu || '—'}</td>
                       <td data-label="Xưởng Sửa chữa">{item.sl_cnv}</td>
                       <td data-label="Nhà thầu">{item.sl_nha_thau}</td>
