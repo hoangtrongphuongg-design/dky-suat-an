@@ -317,7 +317,15 @@ export default function DashboardClient({ today }) {
         </header>
 
         <section className="quick-report" id="quick-report">
-          <div className="card-title"><div><Icon name="chart" /><h2>Báo cáo nhanh hôm nay</h2></div><span>{today}</span></div>
+          <div className="quick-report-header">
+            <div className="quick-report-title"><Icon name="chart" /><h2>Báo cáo nhanh hôm nay</h2><span>{today}</span></div>
+            <div className="quick-report-actions">
+              <a className="export-button" href={exportUrl}><Icon name="download" size={19} />Xuất Excel</a>
+              <button className="admin-add-button" type="button" onClick={openAddModal}><Icon name="plus" size={18} />Thêm đăng ký</button>
+              <button className="refresh-button" onClick={refreshAll}><Icon name="refresh" size={18} />Cập nhật</button>
+              <div className="updated-pill"><span />Đã cập nhật {updatedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+          </div>
           <div className="quick-report-grid">
             <div className="quick-report-tile">
               <span className="quick-report-label"><Icon name="food" size={18} />Suất xế hôm nay</span>
@@ -342,10 +350,6 @@ export default function DashboardClient({ today }) {
             </select>
           </div></label>
           <label className="toolbar-search"><span>Tìm kiếm</span><div className="toolbar-input"><Icon name="search" size={18} /><input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Số danh bộ / họ tên / nhóm" /></div></label>
-          <a className="export-button" href={exportUrl}><Icon name="download" size={19} />Xuất Excel</a>
-          <button className="admin-add-button" type="button" onClick={openAddModal}><Icon name="plus" size={18} />Thêm đăng ký</button>
-          <button className="refresh-button" onClick={refreshAll}><Icon name="refresh" size={18} />Cập nhật</button>
-          <div className="updated-pill"><span />Đã cập nhật {updatedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
         </section>
 
         {error && <div className="dashboard-error">{error}</div>}
