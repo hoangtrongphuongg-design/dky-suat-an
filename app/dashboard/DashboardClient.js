@@ -409,11 +409,11 @@ export default function DashboardClient({ today }) {
             <div className="table-scroll">
               <table>
                 <colgroup>
-                  <col style={{ width: '11%' }} /><col style={{ width: '8%' }} /><col style={{ width: '12%' }} />
-                  <col style={{ width: '14%' }} /><col style={{ width: '7%' }} /><col style={{ width: '15%' }} />
-                  <col style={{ width: '9%' }} /><col style={{ width: '8%' }} /><col style={{ width: '6%' }} /><col style={{ width: '10%' }} />
+                  <col style={{ width: '12%' }} /><col style={{ width: '8%' }} /><col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} /><col style={{ width: '9%' }} /><col style={{ width: '15%' }} />
+                  <col style={{ width: '8%' }} /><col style={{ width: '7%' }} /><col style={{ width: '6%' }} /><col style={{ width: '11%' }} />
                 </colgroup>
-                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Ghi chú</th><th title="Xưởng Sửa chữa">Xưởng SC</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
+                <thead><tr><th>Thời gian</th><th title="Số danh bộ">Danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Ghi chú</th><th title="Xưởng Sửa chữa">Xưởng SC</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id}>
