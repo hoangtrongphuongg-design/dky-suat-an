@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { isValidEmployeeId, normalizeEmployeeId } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function GET(request) {
   const ip = getClientIp(request);

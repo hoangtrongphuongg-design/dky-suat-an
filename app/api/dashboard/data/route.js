@@ -5,6 +5,7 @@ import { getVietnamDate } from '@/lib/time';
 import { isIsoDate } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 function unauthorized() {
   return NextResponse.json({ error: 'Phiên xem dashboard đã hết hạn.' }, { status: 401 });

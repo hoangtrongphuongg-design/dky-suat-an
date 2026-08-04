@@ -5,6 +5,7 @@ import { getVietnamDate, isRegistrationLocked } from '@/lib/time';
 import { isValidEmployeeId, normalizeEmployeeId, validateRegistration } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 export async function GET(request) {
   const id = normalizeEmployeeId(new URL(request.url).searchParams.get('id'));

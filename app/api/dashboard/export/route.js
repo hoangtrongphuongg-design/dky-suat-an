@@ -4,6 +4,9 @@ import { getSql } from '@/lib/db';
 import { getVietnamDate } from '@/lib/time';
 import { isIsoDate } from '@/lib/validation';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 function csvCell(value) {
   const text = String(value ?? '').replaceAll('"', '""');
   return `"${text}"`;
