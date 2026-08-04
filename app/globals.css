@@ -204,8 +204,8 @@ table { width: 100%; border-collapse: collapse; }
 th { padding: 10px 9px; color: #53637c; background: #f7f9fc; font-size: 9px; letter-spacing: .01em; text-align: left; white-space: nowrap; }
 td { padding: 9px; border-top: 1px solid #eef2f6; color: #44536a; font-size: 10px; white-space: nowrap; }
 td strong { color: #253b5f; }
-.table-card table { table-layout: fixed; }
-.table-card th, .table-card td { overflow: hidden; text-overflow: ellipsis; }
+.table-card table { table-layout: auto; }
+.table-card th, .table-card td { white-space: normal; word-break: break-word; }
 .type-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
 .type-badge.xe { color: var(--blue-700); background: var(--blue-100); }
 .type-badge.dem { color: #6d28d9; background: #f1e8ff; }
