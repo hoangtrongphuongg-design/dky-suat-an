@@ -1,18 +1,38 @@
-import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
+import { getSql } from '@/lib/db';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { isValidEmployeeId, normalizeEmployeeId } from '@/lib/validation';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const so_danh_bo = searchParams.get('id');
-  
-  if (!so_danh_bo) return NextResponse.json({ ho_ten: "" });
-  
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`employee:${ip}`, 60, 60_000);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Thao tác quá nhanh. Vui lòng thử lại sau.' }, {
+      status: 429,
+      headers: { 'Retry-After': String(limit.retryAfter) },
+    });
+  }
+
+  const id = normalizeEmployeeId(new URL(request.url).searchParams.get('id'));
+  if (!isValidEmployeeId(id)) {
+    return NextResponse.json({ error: 'Số danh bộ không hợp lệ.' }, { status: 400 });
+  }
+
   try {
-    const sql = neon(process.env.DATABASE_URL);
-    const result = await sql`SELECT ho_ten FROM nhan_vien WHERE so_danh_bo = ${so_danh_bo} LIMIT 1`;
-    if (result.length > 0) return NextResponse.json({ ho_ten: result[0].ho_ten });
-    return NextResponse.json({ ho_ten: "" });
+    const sql = getSql();
+    const rows = await sql`
+      SELECT so_danh_bo, ho_ten
+      FROM nhan_vien
+      WHERE so_danh_bo = ${id}
+        AND COALESCE(dang_hoat_dong, TRUE) = TRUE
+      LIMIT 1
+    `;
+    if (!rows.length) return NextResponse.json({ error: 'Không tìm thấy nhân viên.' }, { status: 404 });
+    return NextResponse.json(rows[0], { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
-    return NextResponse.json({ ho_ten: "" });
+    console.error('employee lookup failed', error);
+    return NextResponse.json({ error: 'Không thể tra cứu dữ liệu nhân viên.' }, { status: 503 });
   }
 }
