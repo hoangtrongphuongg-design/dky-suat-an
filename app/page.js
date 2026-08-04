@@ -6,8 +6,8 @@ import { ELECTRICAL_GROUPS, MECHANICAL_GROUPS } from '@/lib/groups';
 import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
 
 const DEFAULT_CONFIG = {
-  xe: { date: '', dateLabel: 'Hôm nay', cutoff: null, locked: false },
-  dem: { date: '', dateLabel: 'Ngày mai', cutoff: null },
+  xe: { date: '', dateLabel: 'Hôm nay', cutoff: null },
+  dem: { date: '', dateLabel: 'Hôm nay', cutoff: null },
 };
 
 function Quantity({ label, value, onChange }) {
@@ -112,7 +112,7 @@ export default function RegistrationPage() {
   }, [mealType]);
 
   const total = cnv + contractor;
-  const canSubmit = employeeState === 'valid' && total > 0 && !submitting && !active.locked;
+  const canSubmit = employeeState === 'valid' && total > 0 && !submitting;
 
   const currentAction = useMemo(
     () => items.some((item) => item.nhom_phu_trach === group) ? 'Cập nhật đăng ký' : 'Xác nhận đăng ký',
@@ -188,17 +188,10 @@ export default function RegistrationPage() {
 
         <div className="date-status-card">
           <div className="date-line"><Icon name="calendar" size={20} /><strong>{active.dateLabel}</strong></div>
-          {mealType === 'xe' ? (
-            <span className={`status-pill ${active.locked ? 'locked' : 'open'}`}>
-              <span className="status-dot" />
-              {active.locked ? 'Đã khóa đăng ký' : 'Đang mở đăng ký'}
-            </span>
-          ) : (
-            <span className="status-pill open">
-              <span className="status-dot" />
-              {active.cutoff ? `Chốt lúc ${active.cutoff} ngày ăn` : 'Đang mở đăng ký'}
-            </span>
-          )}
+          <span className="status-pill open">
+            <span className="status-dot" />
+            {active.cutoff ? `Chốt lúc ${active.cutoff} ngày ăn` : 'Đang mở đăng ký'}
+          </span>
         </div>
 
         <form onSubmit={submit} className="registration-form">
@@ -228,8 +221,8 @@ export default function RegistrationPage() {
             </div>
             <p className="helper-text">
               {mealType === 'xe'
-                ? `Trưởng nhóm có thể cập nhật nhiều lần trước giờ khóa${active.cutoff ? ` ${active.cutoff}` : ''}.`
-                : `Đăng ký dự kiến cho ca đêm, có thể cập nhật nhiều lần trước ${active.cutoff || '09:00'} ngày ăn.`}
+                ? `Đăng ký cho ngày ăn hiện tại (${active.dateLabel}). Có thể cập nhật nhiều lần trước ${active.cutoff || '09:00'} ngày ăn; qua giờ đó sẽ tự chuyển sang đăng ký trước cho ngày kế tiếp.`
+                : `Đăng ký dự kiến cho ca đêm. Có thể cập nhật nhiều lần trước ${active.cutoff || '09:00'} ngày ăn.`}
             </p>
           </section>
 
@@ -298,7 +291,7 @@ export default function RegistrationPage() {
                     <strong>{item.nhom_phu_trach}</strong>
                     <span>{Number(item.sl_cnv)} Xưởng Sửa chữa&nbsp;&nbsp;/&nbsp;&nbsp;{Number(item.sl_nha_thau)} NT</span>
                   </div>
-                  <button type="button" onClick={() => editItem(item)} disabled={active.locked}>
+                  <button type="button" onClick={() => editItem(item)}>
                     <Icon name="edit" size={18} /> Sửa
                   </button>
                 </div>

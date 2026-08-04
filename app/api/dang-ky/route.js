@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { isValidMealType } from '@/lib/mealTypes';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
-import { getActiveNightDate, getVietnamDate, isRegistrationLocked } from '@/lib/time';
+import { getActiveRegistrationDate } from '@/lib/time';
 import { isValidEmployeeId, normalizeEmployeeId, validateRegistration } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
-function resolveTargetDate(loaiSuat) {
-  return loaiSuat === 'dem' ? getActiveNightDate().date : getVietnamDate();
+function resolveTargetDate() {
+  return getActiveRegistrationDate().date;
 }
 
 export async function GET(request) {
@@ -21,7 +21,7 @@ export async function GET(request) {
 
   try {
     const sql = getSql();
-    const date = resolveTargetDate(loaiSuat);
+    const date = resolveTargetDate();
     const rows = await sql`
       SELECT id, so_danh_bo, nhom_phu_trach, loai_suat, sl_cnv, sl_nha_thau, thoi_gian_nhap
       FROM dang_ky_suat_an
@@ -56,16 +56,9 @@ export async function POST(request) {
   if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
   const { soDanhBo, group, loaiSuat, cnv, contractor } = checked.value;
 
-  // Suất đêm không có trạng thái khóa cứng: luôn có một ngày mục tiêu
-  // đang mở (xem lib/time.js#getActiveNightDate), chỉ suất xế mới khóa
-  // hẳn khi qua giờ chốt của hôm nay.
-  if (loaiSuat === 'xe' && isRegistrationLocked()) {
-    return NextResponse.json({ error: 'Đăng ký hôm nay đã khóa.' }, { status: 423 });
-  }
-
   try {
     const sql = getSql();
-    const date = resolveTargetDate(loaiSuat);
+    const date = resolveTargetDate();
     const employee = await sql`
       SELECT ho_ten FROM nhan_vien
       WHERE so_danh_bo = ${soDanhBo}
