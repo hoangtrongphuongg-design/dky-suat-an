@@ -383,7 +383,7 @@ export default function DashboardClient({ today }) {
 
         <section className="quick-report" id="quick-report">
           <div className="quick-report-header">
-            <div className="quick-report-title"><Icon name="chart" /><h2>Báo cáo nhanh hôm nay</h2><span>{today}</span></div>
+            <div className="quick-report-title"><Icon name="chart" /><h2>Báo cáo nhanh hôm nay</h2><span>{today.split('-').reverse().join('/')}</span></div>
             <div className="quick-report-actions">
               <a className="export-button" href={exportUrl}><Icon name="download" size={19} />Xuất Excel</a>
               <button className="admin-add-button" type="button" onClick={openAddModal}><Icon name="plus" size={18} />Thêm đăng ký</button>
