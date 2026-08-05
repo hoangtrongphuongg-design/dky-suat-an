@@ -80,3 +80,58 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Không thể lưu thay đổi.' }, { status: 500 });
   }
 }
+
+export async function PATCH(request) {
+  if (!verifyDashboardSession(request.cookies.get(DASHBOARD_COOKIE)?.value)) {
+    return NextResponse.json({ error: 'Phiên xem dashboard đã hết hạn.' }, { status: 401 });
+  }
+
+  const id = Number(new URL(request.url).searchParams.get('id'));
+  if (!Number.isInteger(id) || id <= 0) {
+    return NextResponse.json({ error: 'Mã đăng ký không hợp lệ.' }, { status: 400 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Dữ liệu gửi lên không hợp lệ.' }, { status: 400 });
+  }
+  const daHuy = Boolean(body?.da_huy);
+  const ip = getClientIp(request);
+
+  try {
+    const sql = getSql();
+    const result = await sql`
+      WITH updated AS (
+        UPDATE dang_ky_suat_an
+        SET da_huy = ${daHuy}
+        WHERE id = ${id}
+        RETURNING id, so_danh_bo, nhom_phu_trach, loai_suat, ngay_dang_ky, sl_cnv, sl_nha_thau, da_huy
+      ), audited AS (
+        INSERT INTO lich_su_dang_ky_suat_an (
+          dang_ky_id, so_danh_bo, nhom_phu_trach, loai_suat, ngay_dang_ky,
+          sl_cnv_truoc, sl_cnv_sau, sl_nha_thau_truoc, sl_nha_thau_sau,
+          hanh_dong, dia_chi_ip
+        )
+        SELECT
+          u.id, u.so_danh_bo, u.nhom_phu_trach, u.loai_suat, u.ngay_dang_ky,
+          u.sl_cnv, u.sl_cnv, u.sl_nha_thau, u.sl_nha_thau,
+          CASE WHEN u.da_huy THEN 'Admin: Hủy đăng ký' ELSE 'Admin: Khôi phục đăng ký' END,
+          ${ip}
+        FROM updated u
+      )
+      SELECT * FROM updated
+    `;
+
+    if (!result.length) return NextResponse.json({ error: 'Không tìm thấy đăng ký.' }, { status: 404 });
+    return NextResponse.json({
+      success: true,
+      message: daHuy ? 'Đã hủy đăng ký.' : 'Đã khôi phục đăng ký.',
+      item: result[0],
+    });
+  } catch (error) {
+    console.error('admin registration status update failed', error);
+    return NextResponse.json({ error: 'Không thể cập nhật trạng thái.' }, { status: 500 });
+  }
+}

@@ -239,6 +239,13 @@ td strong { color: #253b5f; }
 .modal-error { margin: 14px 0 0; padding: 10px 12px; border: 1px solid #f2bbb5; border-radius: 10px; color: #9c2a20; background: #fff0ef; font-size: 12px; font-weight: 700; }
 .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
 .modal-actions .secondary-button, .modal-actions .primary-button { margin-top: 0; }
+.modal-danger-zone { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.modal-cancelled-note { display: flex; align-items: center; gap: 7px; margin: 0 0 10px; color: #9a3412; font-size: 12px; font-weight: 700; }
+.danger-button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 46px; border: 1px solid #f2bbb5; border-radius: 14px; color: #b3261e; background: #fff5f4; font-weight: 750; cursor: pointer; }
+.danger-button:disabled { opacity: .5; cursor: not-allowed; }
+.text-danger { color: #b3261e; font-weight: 700; }
+.text-success { color: #18833b; font-weight: 700; }
+.row-cancelled { opacity: .55; }
 
 @media (min-width: 760px) {
   .registration-shell { padding-bottom: 35px; }

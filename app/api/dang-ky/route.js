@@ -26,6 +26,7 @@ export async function GET(request) {
       SELECT id, so_danh_bo, nhom_phu_trach, loai_suat, sl_cnv, sl_nha_thau, ghi_chu, thoi_gian_nhap
       FROM dang_ky_suat_an
       WHERE so_danh_bo = ${id} AND ngay_dang_ky = ${date}::date AND loai_suat = ${loaiSuat}
+        AND da_huy = FALSE
       ORDER BY thoi_gian_nhap DESC
     `;
     return NextResponse.json({ items: rows, date }, { headers: { 'Cache-Control': 'no-store' } });
@@ -85,6 +86,7 @@ export async function POST(request) {
           sl_cnv = EXCLUDED.sl_cnv,
           sl_nha_thau = EXCLUDED.sl_nha_thau,
           ghi_chu = EXCLUDED.ghi_chu,
+          da_huy = FALSE,
           thoi_gian_nhap = CURRENT_TIMESTAMP
         RETURNING id, so_danh_bo, nhom_phu_trach, loai_suat, ngay_dang_ky, sl_cnv, sl_nha_thau, ghi_chu, thoi_gian_nhap
       ), audited AS (

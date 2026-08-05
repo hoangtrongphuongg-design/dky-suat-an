@@ -13,7 +13,7 @@ const TYPE_FILTERS = [
   { value: 'all', label: 'Tất cả' },
 ];
 
-const EMPTY_ADMIN_FORM = { soDanhBo: '', hoTen: '', ngayDangKy: '', loaiSuat: 'xe', group: MECHANICAL_GROUPS[0], cnv: 0, contractor: 0, ghiChu: '' };
+const EMPTY_ADMIN_FORM = { soDanhBo: '', hoTen: '', ngayDangKy: '', loaiSuat: 'xe', group: MECHANICAL_GROUPS[0], cnv: 0, contractor: 0, ghiChu: '', daHuy: false };
 
 function formatDateTime(value) {
   if (!value) return '—';
@@ -40,7 +40,7 @@ function HistoryChange({ row }) {
   return <>{changes.length ? changes.join(' · ') : row.hanh_dong}</>;
 }
 
-function AdminRegistrationModal({ mode, form, saving, error, onChange, onClose, onSubmit }) {
+function AdminRegistrationModal({ mode, form, saving, toggling, error, onChange, onClose, onSubmit, onToggleCancel }) {
   const readOnly = mode === 'edit';
   const update = (patch) => onChange({ ...form, ...patch });
   return (
@@ -112,6 +112,23 @@ function AdminRegistrationModal({ mode, form, saving, error, onChange, onClose, 
             <button type="button" className="secondary-button" onClick={onClose}>Hủy</button>
             <button type="submit" className="primary-button" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</button>
           </div>
+
+          {readOnly && (
+            <div className="modal-danger-zone">
+              {form.daHuy ? (
+                <p className="modal-cancelled-note"><Icon name="trash" size={16} />Đăng ký này đang ở trạng thái đã hủy — không tính vào tổng suất ăn.</p>
+              ) : null}
+              <button
+                type="button"
+                className={form.daHuy ? 'secondary-button' : 'danger-button'}
+                onClick={onToggleCancel}
+                disabled={toggling}
+              >
+                <Icon name={form.daHuy ? 'refresh' : 'trash'} size={16} />
+                {toggling ? 'Đang xử lý...' : form.daHuy ? 'Khôi phục đăng ký này' : 'Hủy đăng ký này'}
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>
@@ -135,6 +152,7 @@ export default function DashboardClient({ today }) {
   const [adminMode, setAdminMode] = useState('add');
   const [adminForm, setAdminForm] = useState(null);
   const [adminSaving, setAdminSaving] = useState(false);
+  const [adminToggling, setAdminToggling] = useState(false);
   const [adminError, setAdminError] = useState('');
 
   useEffect(() => {
@@ -195,29 +213,33 @@ export default function DashboardClient({ today }) {
     () => (typeFilter === 'all' ? history : history.filter((row) => row.loai_suat === typeFilter)),
     [history, typeFilter],
   );
+  // Dòng đã hủy vẫn hiện trong bảng để theo dõi, nhưng không tính vào
+  // KPI/biểu đồ/báo cáo nhanh.
+  const activeItems = useMemo(() => filteredItems.filter((item) => !item.da_huy), [filteredItems]);
 
   const summary = useMemo(() => {
-    const cnv = filteredItems.reduce((sum, item) => sum + Number(item.sl_cnv || 0), 0);
-    const contractor = filteredItems.reduce((sum, item) => sum + Number(item.sl_nha_thau || 0), 0);
+    const cnv = activeItems.reduce((sum, item) => sum + Number(item.sl_cnv || 0), 0);
+    const contractor = activeItems.reduce((sum, item) => sum + Number(item.sl_nha_thau || 0), 0);
     return {
       cnv,
       contractor,
       total: cnv + contractor,
-      groups: new Set(filteredItems.map((item) => item.nhom_phu_trach)).size,
-      leaders: new Set(filteredItems.map((item) => item.so_danh_bo)).size,
+      groups: new Set(activeItems.map((item) => item.nhom_phu_trach)).size,
+      leaders: new Set(activeItems.map((item) => item.so_danh_bo)).size,
     };
-  }, [filteredItems]);
+  }, [activeItems]);
 
   const groupTotals = useMemo(() => GROUPS.map((name) => ({
     name,
-    total: filteredItems
+    total: activeItems
       .filter((item) => item.nhom_phu_trach === name)
       .reduce((sum, item) => sum + Number(item.sl_cnv || 0) + Number(item.sl_nha_thau || 0), 0),
-  })), [filteredItems]);
+  })), [activeItems]);
 
   const todayReport = useMemo(() => {
     const buckets = { xe: { cnv: 0, contractor: 0 }, dem: { cnv: 0, contractor: 0 } };
     for (const item of todayItems) {
+      if (item.da_huy) continue;
       const bucket = buckets[item.loai_suat] || buckets.xe;
       bucket.cnv += Number(item.sl_cnv || 0);
       bucket.contractor += Number(item.sl_nha_thau || 0);
@@ -253,6 +275,7 @@ export default function DashboardClient({ today }) {
     setAdminMode('edit');
     setAdminError('');
     setAdminForm({
+      id: item.id,
       soDanhBo: item.so_danh_bo,
       hoTen: item.ho_ten,
       ngayDangKy: String(item.ngay_dang_ky).slice(0, 10),
@@ -261,6 +284,7 @@ export default function DashboardClient({ today }) {
       cnv: Number(item.sl_cnv || 0),
       contractor: Number(item.sl_nha_thau || 0),
       ghiChu: item.ghi_chu || '',
+      daHuy: Boolean(item.da_huy),
     });
   }
 
@@ -300,6 +324,34 @@ export default function DashboardClient({ today }) {
       setAdminError(error.message || 'Có lỗi xảy ra.');
     } finally {
       setAdminSaving(false);
+    }
+  }
+
+  async function toggleCancelRegistration() {
+    if (!adminForm?.id) return;
+    const nextDaHuy = !adminForm.daHuy;
+    if (nextDaHuy && !window.confirm('Hủy đăng ký này? Suất ăn sẽ không được tính vào tổng nữa.')) return;
+    setAdminToggling(true);
+    setAdminError('');
+    try {
+      const response = await fetch(`/api/dashboard/registration?id=${adminForm.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ da_huy: nextDaHuy }),
+      });
+      const data = await response.json();
+      if (response.status === 401) {
+        router.replace('/dashboard/login');
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || 'Không thể cập nhật trạng thái.');
+      setAdminForm(null);
+      await loadData();
+      if (adminForm.ngayDangKy === today) await loadTodayReport();
+    } catch (error) {
+      setAdminError(error.message || 'Có lỗi xảy ra.');
+    } finally {
+      setAdminToggling(false);
     }
   }
 
@@ -408,10 +460,10 @@ export default function DashboardClient({ today }) {
             <div className="card-title"><div><Icon name="list" /><h2>Chi tiết đăng ký</h2></div><span>{filteredItems.length} bản ghi</span></div>
             <div className="table-scroll">
               <table>
-                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Ghi chú</th><th>Xưởng Sửa chữa</th><th>Nhà thầu</th><th>Tổng</th><th /></tr></thead>
+                <thead><tr><th>Thời gian</th><th>Số danh bộ</th><th>Họ tên</th><th>Nhóm</th><th>Loại</th><th>Ghi chú</th><th>Xưởng Sửa chữa</th><th>Nhà thầu</th><th>Tổng</th><th>Trạng thái</th><th /></tr></thead>
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={item.id} className={item.da_huy ? 'row-cancelled' : ''}>
                       <td data-label="Thời gian">{formatDateTime(item.thoi_gian_nhap)}</td>
                       <td data-label="Số danh bộ">{item.so_danh_bo}</td>
                       <td data-label="Họ tên">{item.ho_ten || '—'}</td>
@@ -421,9 +473,10 @@ export default function DashboardClient({ today }) {
                       <td data-label="Xưởng Sửa chữa">{item.sl_cnv}</td>
                       <td data-label="Nhà thầu">{item.sl_nha_thau}</td>
                       <td data-label="Tổng"><strong>{item.sl_cnv + item.sl_nha_thau}</strong></td>
+                      <td data-label="Trạng thái" className={item.da_huy ? 'text-danger' : 'text-success'}>{item.da_huy ? 'Đã hủy' : 'Đã xác nhận'}</td>
                       <td data-label=""><button type="button" className="table-edit-button" onClick={() => openEditModal(item)}><Icon name="edit" size={15} />Sửa</button></td>
                     </tr>
-                  )) : <tr><td colSpan="10" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
+                  )) : <tr><td colSpan="11" className="table-empty">{loading ? 'Đang tải dữ liệu...' : 'Không có dữ liệu trong khoảng đã chọn.'}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -465,10 +518,12 @@ export default function DashboardClient({ today }) {
           mode={adminMode}
           form={adminForm}
           saving={adminSaving}
+          toggling={adminToggling}
           error={adminError}
           onChange={setAdminForm}
           onClose={closeAdminModal}
           onSubmit={submitAdminForm}
+          onToggleCancel={toggleCancelRegistration}
         />
       )}
     </main>

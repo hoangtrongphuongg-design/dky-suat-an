@@ -191,3 +191,12 @@ CREATE INDEX IF NOT EXISTS idx_lich_su_dang_ky_ngay_dang_ky
 -- bắt buộc), hiển thị trên dashboard và trong file xuất Excel.
 ALTER TABLE dang_ky_suat_an
   ADD COLUMN IF NOT EXISTS ghi_chu TEXT;
+
+-- Hủy đăng ký (quyền admin): đánh dấu thay vì xóa, để giữ lịch sử.
+-- Dòng bị hủy không tính vào tổng suất ăn nhưng vẫn hiện trong bảng
+-- chi tiết. Trưởng nhóm đăng ký lại đúng tổ hợp này sẽ tự bỏ hủy.
+ALTER TABLE dang_ky_suat_an
+  ADD COLUMN IF NOT EXISTS da_huy BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_dang_ky_suat_an_da_huy
+  ON dang_ky_suat_an (da_huy);

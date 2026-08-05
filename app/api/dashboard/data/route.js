@@ -29,7 +29,7 @@ export async function GET(request) {
       sql`
         SELECT
           d.id, d.ngay_dang_ky, d.so_danh_bo, n.ho_ten,
-          d.nhom_phu_trach, d.loai_suat, d.sl_cnv, d.sl_nha_thau, d.ghi_chu, d.thoi_gian_nhap
+          d.nhom_phu_trach, d.loai_suat, d.sl_cnv, d.sl_nha_thau, d.ghi_chu, d.da_huy, d.thoi_gian_nhap
         FROM dang_ky_suat_an d
         LEFT JOIN nhan_vien n ON n.so_danh_bo = d.so_danh_bo
         WHERE d.ngay_dang_ky BETWEEN ${from}::date AND ${to}::date
