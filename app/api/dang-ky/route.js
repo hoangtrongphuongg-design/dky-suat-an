@@ -2,15 +2,11 @@ import { NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { isValidMealType } from '@/lib/mealTypes';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
-import { getActiveRegistrationDate } from '@/lib/time';
+import { getVietnamDate } from '@/lib/time';
 import { isValidEmployeeId, normalizeEmployeeId, validateRegistration } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
-
-function resolveTargetDate() {
-  return getActiveRegistrationDate().date;
-}
 
 export async function GET(request) {
   const params = new URL(request.url).searchParams;
@@ -21,7 +17,7 @@ export async function GET(request) {
 
   try {
     const sql = getSql();
-    const date = resolveTargetDate();
+    const date = getVietnamDate();
     const rows = await sql`
       SELECT id, so_danh_bo, nhom_phu_trach, loai_suat, sl_cnv, sl_nha_thau, ghi_chu, thoi_gian_nhap
       FROM dang_ky_suat_an
@@ -59,7 +55,7 @@ export async function POST(request) {
 
   try {
     const sql = getSql();
-    const date = resolveTargetDate();
+    const date = getVietnamDate();
     const employee = await sql`
       SELECT ho_ten FROM nhan_vien
       WHERE so_danh_bo = ${soDanhBo}

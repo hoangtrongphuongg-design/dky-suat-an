@@ -5,10 +5,7 @@ import { Icon } from '@/components/Icons';
 import { ELECTRICAL_GROUPS, MECHANICAL_GROUPS } from '@/lib/groups';
 import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
 
-const DEFAULT_CONFIG = {
-  xe: { date: '', dateLabel: 'Hôm nay', cutoff: null },
-  dem: { date: '', dateLabel: 'Hôm nay', cutoff: null },
-};
+const DEFAULT_CONFIG = { date: '', dateLabel: 'Hôm nay', cutoff: null };
 
 function Quantity({ label, value, onChange }) {
   const update = (next) => onChange(Math.max(0, Number.isFinite(next) ? Math.trunc(next) : 0));
@@ -45,7 +42,7 @@ export default function RegistrationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
   const abortRef = useRef(null);
-  const active = config[mealType] || DEFAULT_CONFIG[mealType];
+  const active = config;
 
   useEffect(() => {
     fetch('/api/config', { cache: 'no-store' })
@@ -194,7 +191,7 @@ export default function RegistrationPage() {
           <div className="date-line"><Icon name="calendar" size={20} /><strong>{active.dateLabel}</strong></div>
           <span className="status-pill open">
             <span className="status-dot" />
-            {active.cutoff ? `Chốt lúc ${active.cutoff} ngày ăn` : 'Đang mở đăng ký'}
+            Đang mở đăng ký
           </span>
         </div>
 
@@ -224,9 +221,8 @@ export default function RegistrationPage() {
               {employeeName || 'Họ tên sẽ tự động hiển thị'}
             </div>
             <p className="helper-text">
-              {mealType === 'xe'
-                ? `Đăng ký cho ngày ăn hiện tại (${active.dateLabel}). Có thể cập nhật nhiều lần trước ${active.cutoff || '09:00'} ngày ăn; qua giờ đó sẽ tự chuyển sang đăng ký trước cho ngày kế tiếp.`
-                : `Đăng ký dự kiến cho ca đêm. Có thể cập nhật nhiều lần trước ${active.cutoff || '09:00'} ngày ăn.`}
+              Đăng ký cho hôm nay ({active.dateLabel}), có thể cập nhật nhiều lần.
+              {active.cutoff ? ` Đăng ký sau ${active.cutoff} sẽ được đánh dấu là đăng ký muộn.` : ''}
             </p>
           </section>
 

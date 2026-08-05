@@ -245,6 +245,7 @@ td strong { color: #253b5f; }
 .danger-button:disabled { opacity: .5; cursor: not-allowed; }
 .text-danger { color: #b3261e; font-weight: 700; }
 .text-success { color: #18833b; font-weight: 700; }
+.late-tag { margin-left: 6px; color: var(--orange); font-weight: 700; }
 .row-cancelled { opacity: .55; }
 
 @media (min-width: 760px) {

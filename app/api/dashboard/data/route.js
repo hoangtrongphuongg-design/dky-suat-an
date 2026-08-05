@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { DASHBOARD_COOKIE, verifyDashboardSession } from '@/lib/dashboardAuth';
 import { getSql } from '@/lib/db';
-import { getVietnamDate } from '@/lib/time';
+import { getVietnamDate, isTimeAfterCutoff } from '@/lib/time';
 import { isIsoDate } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +58,7 @@ export async function GET(request) {
       ...row,
       sl_cnv: Number(row.sl_cnv || 0),
       sl_nha_thau: Number(row.sl_nha_thau || 0),
+      is_late: isTimeAfterCutoff(new Date(row.thoi_gian_nhap)),
     }));
     const history = historyRows.map((row) => ({
       ...row,

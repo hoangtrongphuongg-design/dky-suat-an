@@ -464,7 +464,7 @@ export default function DashboardClient({ today }) {
                 <tbody>
                   {pageItems.length ? pageItems.map((item) => (
                     <tr key={item.id} className={item.da_huy ? 'row-cancelled' : ''}>
-                      <td data-label="Thời gian">{formatDateTime(item.thoi_gian_nhap)}</td>
+                      <td data-label="Thời gian">{formatDateTime(item.thoi_gian_nhap)}{item.is_late && <span className="late-tag">Muộn</span>}</td>
                       <td data-label="Số danh bộ">{item.so_danh_bo}</td>
                       <td data-label="Họ tên">{item.ho_ten || '—'}</td>
                       <td data-label="Nhóm"><strong>{item.nhom_phu_trach}</strong></td>
