@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '@/components/Icons';
 import { ELECTRICAL_GROUPS, MECHANICAL_GROUPS } from '@/lib/groups';
 import { MEAL_TYPE_LABELS } from '@/lib/mealTypes';
+import { formatVietnamDateFromIso, getVietnamDate } from '@/lib/time';
 
 const DEFAULT_CONFIG = { date: '', dateLabel: 'Hôm nay', cutoff: null };
 
@@ -30,6 +31,7 @@ function Quantity({ label, value, onChange }) {
 
 export default function RegistrationPage() {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
+  const [selectedDate, setSelectedDate] = useState(() => getVietnamDate());
   const [mealType, setMealType] = useState('xe');
   const [employeeId, setEmployeeId] = useState('');
   const [employeeName, setEmployeeName] = useState('');
@@ -43,6 +45,11 @@ export default function RegistrationPage() {
   const [notice, setNotice] = useState(null);
   const abortRef = useRef(null);
   const active = config;
+  const isToday = !config.date || selectedDate === config.date;
+  const dateLabel = useMemo(
+    () => (isToday && config.dateLabel ? config.dateLabel : formatVietnamDateFromIso(selectedDate) || selectedDate),
+    [isToday, config.dateLabel, selectedDate],
+  );
 
   useEffect(() => {
     fetch('/api/config', { cache: 'no-store' })
@@ -51,10 +58,10 @@ export default function RegistrationPage() {
       .catch(() => setConfig(DEFAULT_CONFIG));
   }, []);
 
-  const loadToday = useCallback(async (id, type) => {
-    if (!id) return setItems([]);
+  const loadToday = useCallback(async (id, type, date) => {
+    if (!id || !date) return setItems([]);
     try {
-      const params = new URLSearchParams({ id, loai: type });
+      const params = new URLSearchParams({ id, loai: type, date });
       const response = await fetch(`/api/dang-ky?${params}`, { cache: 'no-store' });
       const data = await response.json();
       if (response.ok) setItems(data.items || []);
@@ -87,7 +94,7 @@ export default function RegistrationPage() {
         if (!response.ok) throw new Error(data.error || 'Không tìm thấy nhân viên.');
         setEmployeeName(data.ho_ten);
         setEmployeeState('valid');
-        loadToday(id, mealType);
+        loadToday(id, mealType, selectedDate);
       } catch (error) {
         if (error.name === 'AbortError') return;
         setEmployeeName(error.message || 'Không thể tra cứu danh bộ.');
@@ -96,7 +103,7 @@ export default function RegistrationPage() {
     }, 350);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mealType switches are handled by the effect below
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mealType/selectedDate switches are handled by the effect below
   }, [employeeId, loadToday]);
 
   useEffect(() => {
@@ -105,9 +112,9 @@ export default function RegistrationPage() {
     setContractor(0);
     setNotice(null);
     const id = employeeId.trim();
-    if (employeeState === 'valid' && id.length >= 4) loadToday(id, mealType);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to explicit type switches
-  }, [mealType]);
+    if (employeeState === 'valid' && id.length >= 4) loadToday(id, mealType, selectedDate);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to explicit type/date switches
+  }, [mealType, selectedDate]);
 
   const total = cnv + contractor;
   const canSubmit = employeeState === 'valid' && total > 0 && !submitting;
@@ -130,6 +137,7 @@ export default function RegistrationPage() {
           so_danh_bo: employeeId.trim(),
           nhom_phu_trach: group,
           loai_suat: mealType,
+          ngay_dang_ky: selectedDate,
           sl_cnv: cnv,
           sl_nha_thau: contractor,
           ghi_chu: note,
@@ -138,7 +146,7 @@ export default function RegistrationPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Không thể lưu đăng ký.');
       setNotice({ type: 'success', text: data.message });
-      await loadToday(employeeId.trim(), mealType);
+      await loadToday(employeeId.trim(), mealType, selectedDate);
       setCnv(0);
       setContractor(0);
       setNote('');
@@ -188,10 +196,24 @@ export default function RegistrationPage() {
         </div>
 
         <div className="date-status-card">
-          <div className="date-line"><Icon name="calendar" size={20} /><strong>{active.dateLabel}</strong></div>
-          <span className="status-pill open">
+          <div className="date-line">
+            <Icon name="calendar" size={20} />
+            <div className="date-line-text">
+              <span className="date-line-label">{dateLabel}</span>
+              <input
+                type="date"
+                id="registration-date"
+                className="date-picker-input"
+                value={selectedDate}
+                min={config.date || undefined}
+                onChange={(event) => setSelectedDate(event.target.value)}
+                aria-label="Chọn ngày đăng ký suất ăn"
+              />
+            </div>
+          </div>
+          <span className={`status-pill ${isToday ? 'open' : 'other'}`}>
             <span className="status-dot" />
-            Đang mở đăng ký
+            {isToday ? 'Đang mở đăng ký' : 'Ngày khác'}
           </span>
         </div>
 
@@ -221,7 +243,7 @@ export default function RegistrationPage() {
               {employeeName || 'Họ tên sẽ tự động hiển thị'}
             </div>
             <p className="helper-text">
-              Đăng ký cho hôm nay ({active.dateLabel}), có thể cập nhật nhiều lần.
+              Đăng ký cho {dateLabel}, có thể cập nhật nhiều lần.
               {active.cutoff ? ` Đăng ký sau ${active.cutoff} sẽ được đánh dấu là đăng ký muộn.` : ''}
             </p>
           </section>
@@ -285,7 +307,7 @@ export default function RegistrationPage() {
           <div className="today-header">
             <div className="section-heading compact">
               <span className="section-icon"><Icon name="list" /></span>
-              <div><span className="section-kicker">{MEAL_TYPE_LABELS[mealType]} · {active.dateLabel}</span><h2>Đăng ký của trưởng nhóm</h2></div>
+              <div><span className="section-kicker">{MEAL_TYPE_LABELS[mealType]} · {dateLabel}</span><h2>Đăng ký của trưởng nhóm</h2></div>
             </div>
             <span className="record-count">{items.length} nhóm</span>
           </div>
@@ -293,7 +315,7 @@ export default function RegistrationPage() {
           {employeeState !== 'valid' ? (
             <div className="empty-state"><Icon name="user" size={30} /><p>Nhập số danh bộ để xem các đăng ký đã lưu.</p></div>
           ) : items.length === 0 ? (
-            <div className="empty-state"><Icon name="list" size={30} /><p>Chưa có nhóm nào được đăng ký cho {active.dateLabel}.</p></div>
+            <div className="empty-state"><Icon name="list" size={30} /><p>Chưa có nhóm nào được đăng ký cho {dateLabel}.</p></div>
           ) : (
             <div className="today-list">
               {items.map((item) => (

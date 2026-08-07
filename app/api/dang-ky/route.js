@@ -3,7 +3,7 @@ import { getSql } from '@/lib/db';
 import { isValidMealType } from '@/lib/mealTypes';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { getVietnamDate } from '@/lib/time';
-import { isValidEmployeeId, normalizeEmployeeId, validateRegistration } from '@/lib/validation';
+import { isIsoDate, isValidEmployeeId, normalizeEmployeeId, validateRegistration } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -12,12 +12,14 @@ export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const id = normalizeEmployeeId(params.get('id'));
   const loaiSuat = String(params.get('loai') || 'xe').trim();
+  const rawDate = params.get('date');
+  const date = rawDate ? rawDate.trim() : getVietnamDate();
   if (!isValidEmployeeId(id)) return NextResponse.json({ error: 'Số danh bộ không hợp lệ.' }, { status: 400 });
   if (!isValidMealType(loaiSuat)) return NextResponse.json({ error: 'Loại suất ăn không hợp lệ.' }, { status: 400 });
+  if (!isIsoDate(date)) return NextResponse.json({ error: 'Ngày ăn không hợp lệ.' }, { status: 400 });
 
   try {
     const sql = getSql();
-    const date = getVietnamDate();
     const rows = await sql`
       SELECT id, so_danh_bo, nhom_phu_trach, loai_suat, sl_cnv, sl_nha_thau, ghi_chu, thoi_gian_nhap
       FROM dang_ky_suat_an
@@ -51,11 +53,10 @@ export async function POST(request) {
 
   const checked = validateRegistration(body);
   if (checked.error) return NextResponse.json({ error: checked.error }, { status: 400 });
-  const { soDanhBo, group, loaiSuat, cnv, contractor, ghiChu } = checked.value;
+  const { soDanhBo, group, loaiSuat, ngayDangKy, cnv, contractor, ghiChu } = checked.value;
 
   try {
     const sql = getSql();
-    const date = getVietnamDate();
     const employee = await sql`
       SELECT ho_ten FROM nhan_vien
       WHERE so_danh_bo = ${soDanhBo}
@@ -69,14 +70,14 @@ export async function POST(request) {
         SELECT sl_cnv, sl_nha_thau
         FROM dang_ky_suat_an
         WHERE so_danh_bo = ${soDanhBo}
-          AND ngay_dang_ky = ${date}::date
+          AND ngay_dang_ky = ${ngayDangKy}::date
           AND nhom_phu_trach = ${group}
           AND loai_suat = ${loaiSuat}
       ), upserted AS (
         INSERT INTO dang_ky_suat_an (
           so_danh_bo, ngay_dang_ky, sl_cnv, sl_nha_thau, nhom_phu_trach, loai_suat, ghi_chu, thoi_gian_nhap
         )
-        VALUES (${soDanhBo}, ${date}::date, ${cnv}, ${contractor}, ${group}, ${loaiSuat}, ${ghiChu}, CURRENT_TIMESTAMP)
+        VALUES (${soDanhBo}, ${ngayDangKy}::date, ${cnv}, ${contractor}, ${group}, ${loaiSuat}, ${ghiChu}, CURRENT_TIMESTAMP)
         ON CONFLICT (so_danh_bo, ngay_dang_ky, nhom_phu_trach, loai_suat)
         DO UPDATE SET
           sl_cnv = EXCLUDED.sl_cnv,

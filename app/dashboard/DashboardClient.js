@@ -67,7 +67,6 @@ function AdminRegistrationModal({ mode, form, saving, toggling, error, onChange,
             id="admin-ngay-an"
             type="date"
             value={form.ngayDangKy}
-            disabled={readOnly}
             onChange={(event) => update({ ngayDangKy: event.target.value })}
           />
 
@@ -285,6 +284,7 @@ export default function DashboardClient({ today }) {
       contractor: Number(item.sl_nha_thau || 0),
       ghiChu: item.ghi_chu || '',
       daHuy: Boolean(item.da_huy),
+      originalNgayDangKy: String(item.ngay_dang_ky).slice(0, 10),
     });
   }
 
@@ -298,19 +298,32 @@ export default function DashboardClient({ today }) {
     setAdminSaving(true);
     setAdminError('');
     try {
-      const response = await fetch('/api/dashboard/registration', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          so_danh_bo: adminForm.soDanhBo,
-          nhom_phu_trach: adminForm.group,
-          loai_suat: adminForm.loaiSuat,
-          ngay_dang_ky: adminForm.ngayDangKy,
-          sl_cnv: adminForm.cnv,
-          sl_nha_thau: adminForm.contractor,
-          ghi_chu: adminForm.ghiChu,
-        }),
-      });
+      const isEdit = adminMode === 'edit' && adminForm.id;
+      const response = await fetch(
+        isEdit ? `/api/dashboard/registration?id=${adminForm.id}` : '/api/dashboard/registration',
+        {
+          method: isEdit ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            isEdit
+              ? {
+                  ngay_dang_ky: adminForm.ngayDangKy,
+                  sl_cnv: adminForm.cnv,
+                  sl_nha_thau: adminForm.contractor,
+                  ghi_chu: adminForm.ghiChu,
+                }
+              : {
+                  so_danh_bo: adminForm.soDanhBo,
+                  nhom_phu_trach: adminForm.group,
+                  loai_suat: adminForm.loaiSuat,
+                  ngay_dang_ky: adminForm.ngayDangKy,
+                  sl_cnv: adminForm.cnv,
+                  sl_nha_thau: adminForm.contractor,
+                  ghi_chu: adminForm.ghiChu,
+                }
+          ),
+        }
+      );
       const data = await response.json();
       if (response.status === 401) {
         router.replace('/dashboard/login');
@@ -319,7 +332,7 @@ export default function DashboardClient({ today }) {
       if (!response.ok) throw new Error(data.error || 'Không thể lưu thay đổi.');
       setAdminForm(null);
       await loadData();
-      if (adminForm.ngayDangKy === today) await loadTodayReport();
+      if (adminForm.ngayDangKy === today || adminForm.originalNgayDangKy === today) await loadTodayReport();
     } catch (error) {
       setAdminError(error.message || 'Có lỗi xảy ra.');
     } finally {
